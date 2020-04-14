@@ -98,16 +98,20 @@ library(tidyverse)
 library(magick)
 library(stringr)
 
+
 # set file specifics
-data_type <- 'NAIP2018'
-annotation_type <- 'Hand'
-area <- 'Nubian_square'
-notes <- 'min70m2' 
+datetime_image <- '2018-07-26_10_57'
+image_id <- "10400100407D9200"
+area <- 'Amsterdam'
+nr_chunk <- "001"
+nr_total <- "224"
 
 # build file names
-site_name <- paste(data_type,annotation_type,area,notes, sep = "_")
+site_name <- paste(area,datetime_image,image_id,'nr',nr_chunk,nr_total, sep = "_")
 
-site_name <- 'Amsterdam_test'
+site_name <- 'data_merged'
+
+# site_name <- 'Amsterdam_2018-09-27_11_19_103005007CF91400_nr_039_156_modified'
 
 # Get directory of this script to set working directory
 working_dir <- paste0(gsub("\\", "/", fileSnapshot()$path, fixed=TRUE),"/")
@@ -127,18 +131,20 @@ dir.create(paste0("../../data/", site_name, "/training_data"), showWarnings = FA
 tif_nr = 1
 bbox_nr = 1
 
+base_path <- paste0("../../data/", site_name)
+
 ## LOAD INPUT DATA ##
 ### TIF RASTER
-files_tif <- list.files(path = paste0("../../data/", site_name, "/tif"), pattern = ".tif")
-path_tif <- paste0("../../data/", site_name, "/tif/", files_tif[tif_nr])
+files_tif <- list.files(path = paste0(base_path, "/tif"), pattern = ".tif")
+path_tif <- paste0(base_path, "/tif/", files_tif[tif_nr])
 
 ### annotation shapefiles
-files_bbox_shp <- list.files(path = paste0("../../data/", site_name, "/extracted_trees/"), pattern = ".shp")
-path_bbox_shp <- paste0("../../data/", site_name, "/extracted_trees/", files_bbox_shp[bbox_nr])
+files_bbox_shp <- list.files(path = paste0(base_path, "/annotations/"), pattern = ".shp")
+path_bbox_shp <- paste0(base_path, "/annotations/", files_bbox_shp[bbox_nr])
 
 ### LOAD DATA
 brick_tif <- brick(path_tif)
-bbox_shapes <- readOGR(dsn = path_bbox_shp)
+bbox_shapes <- readOGR(dsn = path_bbox_shp, dropNULLGeometries = True)
 
 ### clip raster to bbox area 
 str_tif_proj4 <- proj4string(brick_tif)
@@ -183,7 +189,6 @@ print(paste('image size', dimensions[1],'x', dimensions[2], ' will be cut in ', 
 image_name_csv <- paste0('../../data/',site_name, '/training_data/',site_name, "_annotations", ".csv")
 
 files_name_csv <- list.files(path = paste0('../../data/',site_name, "/training_data"), patter = ".csv")
-
 
 files_images_training <- list.files(path = paste0("../../data/", site_name, "/training_data"), pattern = paste0(".",output_image_type) )
 
@@ -302,6 +307,8 @@ for (i_chunk in run_seq){
 
   # plotRGB(chunk, r = 1, g = 2, b = 3, axes = T) 
   
+  plotRGB(chunk, r = 1, g = 2, b = 3);#plot(chunk_bbox,col='red', add = T);  # plot(chunk_bboxes, add = T); plot(box, add = T)
+  
   
   for (i  in seq(length(chunk_bboxes))){
     
@@ -332,7 +339,7 @@ for (i_chunk in run_seq){
     P1 <- Polygon(coords)
     extend_poly <- SpatialPolygons(list(Polygons(list(P1), ID = "a")))
     
-    # plot(extend_poly, col = NA, add = T)
+    plot(extend_poly, col = NA, add = T)
     
     # y axis is the other way around in python so we have to convert
     ymin_box_py = chunk_size - ymax_box
@@ -347,6 +354,7 @@ for (i_chunk in run_seq){
     
     line = paste( image_name, xmin_box, ymin_box_py, xmax_box, ymax_box_py, "tree", sep = ',')
     write(line, file=image_name_csv ,append=TRUE)
+    
   
   
   }
@@ -356,6 +364,11 @@ for (i_chunk in run_seq){
 }
 
 
+```
+
+
+```{r}
+plot(chunk_bboxes, col = 'red')
 ```
 
 
