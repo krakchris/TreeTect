@@ -1,12 +1,10 @@
-.env
-data
-outputs
-.idea
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
 
 # Sphinx documentation
 docs/_build/
@@ -26,3 +24,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+#big_dataset_files
+data
