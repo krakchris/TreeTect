@@ -368,7 +368,31 @@ for (i_chunk in run_seq){
 
 
 ```{r}
-plot(chunk_bboxes, col = 'red')
+
+dimensions 
+chunkSize <- 200
+
+
+nr_chunks <- floor(1000/chunkSize) + 1
+    
+  if (nr_chunks > 1){
+    coords_chunk <- seq(nr_chunks) * chunkSize - chunkSize
+  }else if(nr_chunks == 1){
+    coords_chunk <- seq(2) * chunkSize - chunkSize
+  }else if(nr_chunks == 0){
+    print('image too small')
+    break 
+  }
+  
+  coords_chunk[1] <- 1
+  
+  coords_chunk_rep <- rep(coords_chunk, each=2)
+  coords_chunk_rep_pairs <- coords_chunk_rep[3:length(coords_chunk_rep)-1]
+  
+  
+  list_coords_chunk_rep_pairs <- split(coords_chunk_rep_pairs, ceiling(seq_along(coords_chunk_rep_pairs)/2))
+list_coords_chunk_rep_pairs
+  
 ```
 
 
