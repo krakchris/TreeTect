@@ -339,7 +339,7 @@ for (i_chunk in run_seq){
     P1 <- Polygon(coords)
     extend_poly <- SpatialPolygons(list(Polygons(list(P1), ID = "a")))
     
-    plot(extend_poly, col = NA, add = T)
+    plot(extend_poly, col = 'red', add = T)
     
     # y axis is the other way around in python so we have to convert
     ymin_box_py = chunk_size - ymax_box
