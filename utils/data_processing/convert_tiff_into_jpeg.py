@@ -13,7 +13,7 @@ from skimage import exposure
 
 # command line arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--input_dir", help="path to the csinput directory containing tif files",
+parser.add_argument("--input_dir", help="path to the input directory containing tif files",
                     type=str)
 parser.add_argument("--output_dir", help="path to the output directory",
                     type=str)
