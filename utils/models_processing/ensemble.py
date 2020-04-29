@@ -114,8 +114,11 @@ if __name__ == "__main__":
                 category_index,
                 instance_masks=output_dict.get('detection_masks'),
                 use_normalized_coordinates=True,
-                line_thickness=3,
-                min_score_thresh=args['threshold'])
+                line_thickness=2,
+                min_score_thresh=args['threshold'],
+                skip_scores=True,
+                skip_labels=True,
+                max_boxes_to_draw=1000)
     
         im = Image.fromarray(op_img_np)
         im.save(os.path.join(args['output_dir'], tif_file_name.split('.')[0]+'.jpg'))
