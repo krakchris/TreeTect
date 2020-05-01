@@ -1,7 +1,11 @@
 '''
     Script to split csv data into train and test dataset
     Note: Considering input csv have no headers in it
-
+    Command to run:
+        python generate_train_test_split_from_csv.py
+         --csv_file=<PATH TO THE BIG CSV FILE>
+         --output_dir=<PATH TO THE OUTPUT DIRECTORY>
+         --test_portion=<FLOAT VALUE DENOTING THE RATIO OF TEST SET>
 '''
 
 #importing
@@ -99,6 +103,12 @@ def generate_train_test_csv_data(csv_data, test_set):
     test_csv_data = [['filename', 'xmin', 'ymin', 'xmax', 'ymax', 'class']]
 
     for row_data in csv_data:
+        # converting into int
+        row_data[1] = int(row_data[1])
+        row_data[2] = int(row_data[2])
+        row_data[3] = int(row_data[3])
+        row_data[4] = int(row_data[4])
+
         if row_data[0] in test_set:
             row_data[0] = row_data[0].split('.')[0] + '.jpg'
             test_csv_data.append(row_data)
@@ -109,13 +119,14 @@ def generate_train_test_csv_data(csv_data, test_set):
     return (train_csv_data, test_csv_data)
 
 # entry point
-if __name__== "__main__":
+if __name__ == "__main__":
     print('processing_file...')
 
     csv_data, annotation_count_dict = get_csv_data(args['csv_file'])
     test_set = get_filenames_of_test_set(annotation_count_dict, args['test_portion'])
     train_csv_data, test_csv_data = generate_train_test_csv_data(csv_data, test_set)
 
+    print('Total test images :', len(test_set))
     print('generating train_labels.csv')
 
     with open(os.path.join(args['output_dir'], 'train_labels.csv'), 'w+') as csv_file:
