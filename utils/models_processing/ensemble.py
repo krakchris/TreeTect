@@ -30,33 +30,55 @@ def tif_to_image_conversion(tif_file_path, band_list):
     file_type = 'jpg' # jpg or png
     upper_percentile = 98
     lower_percentile = 2
-    max_single_value_count = -999
+    max_single_value_count = 600
 
     dataset = rasterio.open(tif_file_path)
-
-     # read and reformat raster data
     img = dataset.read()
-    img_plot_raw = img[band_list,:,:]
-    img_plot = np.rot90(np.fliplr(img_plot_raw.T))
+
+    if 'ndvi' in band_list:
     
+        red = img[[4], :, :]
+        nir = img[[6], :, :]
+
+        ndvi=np.where(
+                (nir+red)==0., 
+                0, 
+                (nir-red)/(nir+red))
+
+        ndvi_index_no = band_list.index('ndvi')
+        
+        band_list[ndvi_index_no] = 0
+        band_list = list(map(int, band_list))
+        
+        img_plot_raw = img[band_list,:,:]
+
+        img_plot_raw[[ndvi_index_no], :, :] = ndvi 
+
+    else:
+        band_list = list(map(int, band_list))
+        img_plot_raw = img[band_list,:,:]
+
+    img_plot = np.rot90(np.fliplr(img_plot_raw.T))
+
     # correct exposure for each band individually
     img_plot_enhance = np.array(img_plot, copy=True)
-    
-    
+
     for band in range(3):
-        
         # check max amount of a single value
-        max_count_single_value = np.max(np.unique(img_plot, return_counts=True)[1])
+        values, counts = np.unique(img_plot, return_counts=True)
+        index_nodata = np.argmax(counts)
+        nodata_value = values[index_nodata]
+        max_count_single_value = np.max(values)
         
         # if there are more than specific values set them as nan
         if max_count_single_value > max_single_value_count:
-            no_data_value = img_plot.flatten()[np.argmax(np.unique(img_plot, return_counts=True)[1])]
-            img_plot[img_plot == no_data_value] = np.nan 
+            img_plot[img_plot == nodata_value] = np.nan 
             
         p_1, p_2 = np.nanpercentile(img_plot[:,:,band], (lower_percentile, upper_percentile))
         img_plot_enhance[:,:,band] = exposure.rescale_intensity(img_plot[:,:,band], 
                                                             in_range=(p_1, p_2), 
-                                                            out_range = 'uint8')  
+                                                            out_range = (0,255))
+ 
 
     return img_plot_enhance.astype('uint8')
 
@@ -82,7 +104,7 @@ if __name__ == "__main__":
     category_index = label_map_util.create_category_index_from_labelmap(args['label_file'], use_display_name=True)
 
     for model_file_name in os.listdir(args['model_dir']):
-        model_band_info_dict[model_file_name] = list(map(int, input(f'Enter band no. seperated by comma for model: {model_file_name}\n').split(', ')))
+        model_band_info_dict[model_file_name] = input(f'Enter band no. seperated by comma for model: {model_file_name}\n').split(', ')
 
     # Processing tif files
     for tif_file_name in os.listdir(args['input_dir']):
@@ -99,7 +121,7 @@ if __name__ == "__main__":
 
             img_np = tif_to_image_conversion(
                                         tif_file_path,
-                                        model_band_info_dict[model_file_name]
+                                        model_band_info_dict[model_file_name].copy()
                                     )
 
             detection_graph = get_detection_graph(model_file_path)
@@ -122,6 +144,7 @@ if __name__ == "__main__":
     
         im = Image.fromarray(op_img_np)
         im.save(os.path.join(args['output_dir'], tif_file_name.split('.')[0]+'.jpg'))
+
         print('Processed:', tif_file_name)
         
 
