@@ -1,4 +1,7 @@
 """
+    Note : first three words seperated by underscore in model file name denotes bands
+           e.g: 1_ndvi_3_frozen_inference_graph.pb
+
     -> Model Ensembling script ensemble different model's output.
     -> Input:
             - Path to frozen's model's directory
@@ -16,72 +19,297 @@
     -> Output:
         - Image file having rectangles drawn on it
 """
+import math
+import os
+import sys
 
-import numpy as np
+from collections import defaultdict
+
+import fiona
 import rasterio
 
-from pprint import pprint
-from skimage import exposure
-from skimage.io import imsave, imread
+from PIL import Image, ImageDraw
+from shapely.geometry import Polygon, mapping, box
+from scipy.ndimage.filters import gaussian_filter
+from tqdm import tqdm
 
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..") # for sibling import
 from  model_test import *
+from data_processing.convert_tiff_into_jpeg import convert_to_jpg
 
-def tif_to_image_conversion(tif_file_path, band_list):
-    file_type = 'jpg' # jpg or png
-    upper_percentile = 98
-    lower_percentile = 2
-    max_single_value_count = 600
+def get_inference_data(args):
+    '''
+        Method to run inference for each tif on all model
+        and return the compiledinference data
 
-    dataset = rasterio.open(tif_file_path)
-    img = dataset.read()
+        params:
+            args : commandline argument's dictionary
 
-    if 'ndvi' in band_list:
-    
-        red = img[[4], :, :]
-        nir = img[[6], :, :]
+        return a dictionary where
+        key  = tif_file_name
+        value = [[[boundary_box_1], class, score, model_name(of this inference)],
+                  [[boundary_box_2], class, score, model_name(of this inference)],
+                  ...   ]
+    '''
 
-        ndvi=np.where(
-                (nir+red)==0., 
-                0, 
-                (nir-red)/(nir+red))
+    category_index = label_map_util.create_category_index_from_labelmap(args['label_file'],
+                                                                        use_display_name=True)
+    tif_inference_data = defaultdict(list)
 
-        ndvi_index_no = band_list.index('ndvi')
-        
-        band_list[ndvi_index_no] = 0
-        band_list = list(map(int, band_list))
-        
-        img_plot_raw = img[band_list,:,:]
+    # looping over all model in the directory
+    for model_file_name in tqdm(os.listdir(args['model_dir']), desc='Model_files'):
 
-        img_plot_raw[[ndvi_index_no], :, :] = ndvi 
+        model_file_path = os.path.join(args['model_dir'], model_file_name)
+        detection_graph = get_detection_graph(model_file_path)
+        band_list = model_file_name.split('_')[:3]
 
-    else:
-        band_list = list(map(int, band_list))
-        img_plot_raw = img[band_list,:,:]
+        # Processing tif files
+        for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='tif_files', leave=False):
 
-    img_plot = np.rot90(np.fliplr(img_plot_raw.T))
+            tif_file_path = os.path.join(args['input_dir'], tif_file_name)
+            img_np = convert_to_jpg(
+                                tif_file_path,
+                                band_list.copy())
 
-    # correct exposure for each band individually
-    img_plot_enhance = np.array(img_plot, copy=True)
+            height, width, _ = img_np.shape
 
-    for band in range(3):
-        # check max amount of a single value
-        values, counts = np.unique(img_plot, return_counts=True)
-        index_nodata = np.argmax(counts)
-        nodata_value = values[index_nodata]
-        max_count_single_value = np.max(values)
-        
-        # if there are more than specific values set them as nan
-        if max_count_single_value > max_single_value_count:
-            img_plot[img_plot == nodata_value] = np.nan 
-            
-        p_1, p_2 = np.nanpercentile(img_plot[:,:,band], (lower_percentile, upper_percentile))
-        img_plot_enhance[:,:,band] = exposure.rescale_intensity(img_plot[:,:,band], 
-                                                            in_range=(p_1, p_2), 
-                                                            out_range = (0,255))
- 
+            output_dict = run_inference_for_single_image(img_np, detection_graph)
 
-    return img_plot_enhance.astype('uint8')
+            for index, detection_score in enumerate(output_dict['detection_scores']):
+                if detection_score >= args['threshold']:
+                    ymin, xmin, ymax, xmax = output_dict['detection_boxes'][index]
 
+                    tif_inference_data[tif_file_name].append([
+                        list(map(int, [xmin*width, ymin*height, xmax*width, ymax*height])),
+                        output_dict['detection_classes'][index],
+                        output_dict['detection_scores'][index],
+                        model_file_name])
+
+    return tif_inference_data
+
+def is_overlapping(box1, box2):
+
+    overlapping_threshold = 0.20
+
+    xmin, ymin, xmax, ymax = box1
+    poly1 = Polygon([
+        (xmin, ymin),
+        (xmin, ymax),
+        (xmax, ymax),
+        (xmax, ymin)])
+
+    xmin, ymin, xmax, ymax = box2
+    poly2 = Polygon([
+        (xmin, ymin),
+        (xmin, ymax),
+        (xmax, ymax),
+        (xmax, ymin)])
+
+    intersection = poly1.intersection(poly2)
+    union = poly1.union(poly2)
+
+    if (float(intersection.area)/union.area) > overlapping_threshold:
+        return True
+    return False
+
+def optimize_bounding_boxes(tif_inference_data):
+    '''
+        Method to remove the overlapping boundary boxes
+        params:
+            tif_inference_data
+
+        return optimized_tif_inference_data
+    '''
+
+    optimized_tif_inference_data = defaultdict(list)
+
+    # processing each tif's data
+    for tif_file_name in tqdm(tif_inference_data.keys(), desc='optimizing'):
+        for i in range(len(tif_inference_data[tif_file_name])):
+
+            if tif_inference_data[tif_file_name][i][-1] == 'p':
+                continue   # skipping overlapped data which is already checked
+
+            temp_list = []
+
+            for j in range(i+1, len(tif_inference_data[tif_file_name])):
+
+                if tif_inference_data[tif_file_name][j][-1] == 'p':
+                    continue  # skipping overlapped data which is already checked
+
+                box_1 = tif_inference_data[tif_file_name][i][0]
+                class1 = tif_inference_data[tif_file_name][i][1]
+                box_2 = tif_inference_data[tif_file_name][j][0]
+                class2 = tif_inference_data[tif_file_name][j][1]
+
+                if is_overlapping(box_1, box_2) and class1 == class2:
+                    temp_list.append(tif_inference_data[tif_file_name][j])
+                    tif_inference_data[tif_file_name][j].append('p')
+
+            temp_list.append(tif_inference_data[tif_file_name][i])
+
+            avg_xmin, avg_ymin, avg_xmax, avg_ymax, avg_score = 0, 0, 0, 0, 0
+
+            for data in temp_list:
+                avg_xmin += data[0][0]
+                avg_ymin += data[0][1]
+                avg_xmax += data[0][2]
+                avg_ymax += data[0][3]
+                avg_score += data[2]
+
+            avg_xmin = int(avg_xmin/len(temp_list))
+            avg_ymin = int(avg_ymin/len(temp_list))
+            avg_xmax = int(avg_xmax/len(temp_list))
+            avg_ymax = int(avg_ymax/len(temp_list))
+            avg_score = int(avg_score)/len(temp_list)
+
+            optimized_tif_inference_data[tif_file_name].append([
+                [avg_xmin, avg_ymin, avg_xmax, avg_ymax],
+                temp_list[0][1],
+                avg_score])
+
+    return optimized_tif_inference_data
+
+def draw_boundary_boxes(optimized_tif_inference_data, args):
+    '''
+        Method to draw optimized boundary boxes over images and save to output_directory
+        params:
+            optimized_tif_inference_data
+            args : command line arguments dictionary
+    '''
+    dst_path = os.path.join(args['output_dir'], 'visualizations')
+    if not os.path.exists(dst_path):
+        os.makedirs(dst_path)
+
+    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization'):
+        img_np = convert_to_jpg(
+            os.path.join(args['input_dir'], tif_file_name),
+            [4, 3, 2])
+
+        img = Image.fromarray(img_np)
+        draw = ImageDraw.Draw(img)
+
+        for box in optimized_tif_inference_data[tif_file_name]:
+            xmin, ymin, xmax, ymax = box[0]
+            draw.rectangle(((xmin, ymin), (xmax, ymax)), fill=None, width=2, outline=(0, 255, 0))
+
+        img.save(os.path.join(dst_path, tif_file_name))
+
+def generate_shape_files(optimized_tif_inference_data, args):
+    '''
+        Method to create shpfiles and save to output_directory
+        params:
+            optimized_tif_inference_data
+            args : command line arguments dictionary
+    '''
+    dst_path = os.path.join(args['output_dir'], 'inference_shape_files')
+
+    m2ftconversion = 3.28084
+
+    if not os.path.exists(dst_path):
+        os.makedirs(dst_path)
+
+    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='shape_files'):
+        tif_file_path = os.path.join(args['input_dir'], tif_file_name)
+
+        dataset = rasterio.open(tif_file_path)
+
+        crs = dataset.read_crs()
+        image_array = dataset.read()
+
+        # get raster size in meters
+        raster_size_x = dataset.bounds.right - dataset.bounds.left
+        raster_size_y = dataset.bounds.top - dataset.bounds.bottom
+
+        # get raster resolution in meters
+        y_res = abs(dataset.read_transform()[1])
+        x_res = abs(dataset.read_transform()[5])
+
+        schema = {
+            'geometry': 'Polygon',
+            'properties': {'score': 'float',
+                           'ns_spread' : 'float',
+                           'ew_spread' : 'float',
+                           'volume' : 'float',
+                           'ndvi_avg' : 'float',
+                           'savi_avg' : 'float',
+                           'evi_avg': 'float'},
+            }
+
+        # Write a new Shapefile
+        with fiona.open(os.path.join(dst_path, tif_file_name.split('.')[0]), 'w',
+                        crs=crs,
+                        driver='ESRI Shapefile',
+                        schema=schema) as c:
+
+            for predicted_data in optimized_tif_inference_data[tif_file_name]:
+
+                xmin, ymin, xmax, ymax = predicted_data[0]
+
+                crown_image = image_array[:, ymin:ymax, xmin:xmax]
+
+                RED = crown_image[0, :, :].astype(np.float32)
+                GREEN = crown_image[1, :, :].astype(np.float32)
+                BLUE = crown_image[2, :, :].astype(np.float32)
+                NIR = crown_image[3, :, :].astype(np.float32)
+
+                ## vegetation indices
+                # NDVI
+                ndvi = (NIR - RED) / (NIR + RED)
+                ndvi_avg = np.average(ndvi)
+
+                # EVI
+                G = 2.5; L = 2.4; C = 1
+                evi = G*((NIR-RED)/(L+NIR+C*RED))
+                evi_avg = np.average(evi)
+
+                # SAVI
+                L = 0.5
+                savi = ((NIR - RED) / (RED + NIR + L)) * (1+L)
+                savi_avg = np.average(savi)
+
+                # calculate spread of crown
+                north_south_spread = ((ymax - ymin) * y_res) * m2ftconversion
+                east_west_spread = ((xmax - xmin) * x_res) * m2ftconversion
+                ns_spread = north_south_spread
+                ew_spread = east_west_spread
+
+                # calculate area
+                area = north_south_spread * east_west_spread
+
+                # calculate volume
+                volume = (4/3
+                          * math.pi
+                          * north_south_spread
+                          * east_west_spread
+                          * (((north_south_spread+east_west_spread)/2)/2))
+
+                ndvi[0, :] = 0
+                ndvi[-1, :] = 0
+                ndvi[:, 0] = 0
+                ndvi[:, -1] = 0
+
+                ndvi = gaussian_filter(ndvi, sigma=2)
+
+                # recalculate coordinates
+                xmin = (xmin * x_res + (dataset.bounds.left))
+                xmax = (xmax * x_res + (dataset.bounds.left))
+
+                ymax = (raster_size_y - (ymax * y_res)) + dataset.bounds.bottom
+                ymin = (raster_size_y - (ymin * y_res)) + dataset.bounds.bottom
+
+                poly = box(xmin, ymax, xmax, ymin)
+
+                c.write({
+                    'geometry': mapping(poly),
+                    'properties': {'score': float(predicted_data[2]),
+                                   'ns_spread': float(ns_spread),
+                                   'ew_spread': float(ew_spread),
+                                   'volume': float(volume),
+                                   'ndvi_avg': float(ndvi_avg),
+                                   'savi_avg': float(savi_avg),
+                                   'evi_avg' : float(evi_avg)}
+                })
 
 if __name__ == "__main__":
 
@@ -99,57 +327,13 @@ if __name__ == "__main__":
 
     args = vars(parser.parse_args())
 
-    # creating model data dictionary
-    model_band_info_dict = {}
-    category_index = label_map_util.create_category_index_from_labelmap(args['label_file'], use_display_name=True)
+    tif_inference_data = get_inference_data(args)
 
-    for model_file_name in os.listdir(args['model_dir']):
-        model_band_info_dict[model_file_name] = input(f'Enter band no. seperated by comma for model: {model_file_name}\n').split(', ')
+    print('oprtmizing inference results...')
+    optimized_tif_inference_data = optimize_bounding_boxes(tif_inference_data)
 
-    # Processing tif files
-    for tif_file_name in os.listdir(args['input_dir']):
-        tif_file_path = os.path.join(args['input_dir'], tif_file_name)
-        
-        op_img_np = tif_to_image_conversion(
-                                        tif_file_path,
-                                        [4,3,2]
-                                        )
+    print('ggenerating visualizations...')
+    draw_boundary_boxes(optimized_tif_inference_data, args)
 
-        # processing tif for each model
-        for model_file_name in os.listdir(args['model_dir']):
-            model_file_path = os.path.join(args['model_dir'], model_file_name)
-
-            img_np = tif_to_image_conversion(
-                                        tif_file_path,
-                                        model_band_info_dict[model_file_name].copy()
-                                    )
-
-            detection_graph = get_detection_graph(model_file_path)
-
-            output_dict = run_inference_for_single_image(img_np, detection_graph)
-
-            vis_util.visualize_boxes_and_labels_on_image_array(
-                op_img_np,
-                output_dict['detection_boxes'],
-                output_dict['detection_classes'],
-                output_dict['detection_scores'],
-                category_index,
-                instance_masks=output_dict.get('detection_masks'),
-                use_normalized_coordinates=True,
-                line_thickness=2,
-                min_score_thresh=args['threshold'],
-                skip_scores=True,
-                skip_labels=True,
-                max_boxes_to_draw=1000)
-    
-        im = Image.fromarray(op_img_np)
-        im.save(os.path.join(args['output_dir'], tif_file_name.split('.')[0]+'.jpg'))
-
-        print('Processed:', tif_file_name)
-        
-
-    
-
-
-
-    
+    print('generating shape files...')
+    generate_shape_files(optimized_tif_inference_data, args)
