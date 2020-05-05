@@ -193,7 +193,7 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
             xmin, ymin, xmax, ymax = box[0]
             draw.rectangle(((xmin, ymin), (xmax, ymax)), fill=None, width=2, outline=(0, 255, 0))
 
-        img.save(os.path.join(dst_path, tif_file_name))
+        img.save(os.path.join(dst_path, tif_file_name.split('.')[0] + '.jpg'))
 
 def generate_shape_files(optimized_tif_inference_data, args):
     '''
