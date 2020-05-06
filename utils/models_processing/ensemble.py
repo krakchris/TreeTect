@@ -25,6 +25,7 @@ import sys
 
 from collections import defaultdict
 
+import csv
 import fiona
 import rasterio
 
@@ -311,6 +312,31 @@ def generate_shape_files(optimized_tif_inference_data, args):
                                    'evi_avg' : float(evi_avg)}
                 })
 
+def generate_csv(optimized_tif_inference_data, args):
+    '''
+        Method to log bounding box data in a CSV file
+        params:
+            optimized_tif_inference_data
+            args : command line arguments dictionary
+    '''
+    csv_file_path = os.path.join(args['output_dir'], 'annotations.csv')
+
+    with open(csv_file_path, 'w') as csv_file:
+        writer_obj = csv.writer(csv_file)
+        writer_obj.writerow(['filename', 'xmin', 'ymin', 'xmax', 'ymax', 'label', 'score'])
+
+        for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='csv_file'):
+            for data in optimized_tif_inference_data[tif_file_name]:
+                writer_obj.writerow([
+                    tif_file_name,
+                    data[0][0],
+                    data[0][1],
+                    data[0][2],
+                    data[0][3],
+                    data[1],
+                    round(data[2], 2)])
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -332,8 +358,11 @@ if __name__ == "__main__":
     print('oprtmizing inference results...')
     optimized_tif_inference_data = optimize_bounding_boxes(tif_inference_data)
 
-    print('ggenerating visualizations...')
+    print('generating visualizations...')
     draw_boundary_boxes(optimized_tif_inference_data, args)
 
     print('generating shape files...')
     generate_shape_files(optimized_tif_inference_data, args)
+
+    print('generating csv file...')
+    generate_csv(optimized_tif_inference_data, args)
