@@ -205,7 +205,7 @@ def generate_shape_files(optimized_tif_inference_data, args):
     '''
     dst_path = os.path.join(args['output_dir'], 'inference_shape_files')
 
-    m2ftconversion = 3.28084
+    m2ftconversion = 1
 
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
@@ -249,31 +249,38 @@ def generate_shape_files(optimized_tif_inference_data, args):
 
                 crown_image = image_array[:, ymin:ymax, xmin:xmax]
 
-                RED = crown_image[0, :, :].astype(np.float32)
-                GREEN = crown_image[1, :, :].astype(np.float32)
-                BLUE = crown_image[2, :, :].astype(np.float32)
-                NIR = crown_image[3, :, :].astype(np.float32)
-
-                ## vegetation indices
+                RED = crown_image[4,:,:].astype(np.float32)
+                GREEN = crown_image[2,:,:].astype(np.float32)
+                BLUE = crown_image[1,:,:].astype(np.float32)
+                NIR = crown_image[7,:,:].astype(np.float32)
+                
+                ## vegetation indices    
                 # NDVI
-                ndvi = (NIR - RED) / (NIR + RED)
+                ndvi = np.where(
+                        (NIR+RED) == 0.,
+                        0,
+                        (NIR-RED)/(NIR+RED))
                 ndvi_avg = np.average(ndvi)
 
                 # EVI
                 G = 2.5; L = 2.4; C = 1
-                evi = G*((NIR-RED)/(L+NIR+C*RED))
+                evi = np.where(
+                        (L+NIR+C*RED) == 0.,
+                        0,
+                        G*((NIR-RED)/(L+NIR+C*RED)))
                 evi_avg = np.average(evi)
 
                 # SAVI
                 L = 0.5
-                savi = ((NIR - RED) / (RED + NIR + L)) * (1+L)
+                savi = np.where(
+                        (RED + NIR + L) == 0.,
+                        0,
+                        ((NIR - RED) / (RED + NIR + L)) * (1+L))
                 savi_avg = np.average(savi)
 
                 # calculate spread of crown
                 north_south_spread = ((ymax - ymin) * y_res) * m2ftconversion
                 east_west_spread = ((xmax - xmin) * x_res) * m2ftconversion
-                ns_spread = north_south_spread
-                ew_spread = east_west_spread
 
                 # calculate area
                 area = north_south_spread * east_west_spread
@@ -304,8 +311,8 @@ def generate_shape_files(optimized_tif_inference_data, args):
                 c.write({
                     'geometry': mapping(poly),
                     'properties': {'score': float(predicted_data[2]),
-                                   'ns_spread': float(ns_spread),
-                                   'ew_spread': float(ew_spread),
+                                   'ns_spread': float(north_south_spread),
+                                   'ew_spread': float(east_west_spread),
                                    'volume': float(volume),
                                    'ndvi_avg': float(ndvi_avg),
                                    'savi_avg': float(savi_avg),
