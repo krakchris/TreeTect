@@ -4,7 +4,7 @@
             - Path to small shape files directory
             - Path to output directory
     -> command to run:
-        python ensemble.py\
+        python combine_shape_files.py\
             --input_dir=<PATH_TO_THE_DIRECTORY_CONTAINING_TIF_FILES>\
             --output_dir=<PATH TO THE OUTPUT DIRECTORY>
     -> Output:
