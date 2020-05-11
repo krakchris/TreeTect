@@ -14,21 +14,16 @@
 """
 
 # importing
-import math
 import os
 import random
 
 import argparse
 import fiona
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import rasterio
 
-from rasterio import features
 from scipy import ndimage
-from skimage import exposure
-from skimage.io import imsave, imread
 from shapely.geometry import Point, mapping
 from tqdm import tqdm
 
@@ -71,64 +66,66 @@ def generate_point_shape_files(tif_file_path, annotations_df, output_dir):
     x_res = abs(dataset.read_transform()[5])
 
     schema = {
-            'geometry': 'Point',
-            'properties': {'score': 'float', 
-                        'area' : 'float',
-                        'ndvi_avg' : 'float',
-                        'savi_avg' : 'float',
-                        'evi_avg': 'float'},
+        'geometry': 'Point',
+        'properties': {'score': 'float',
+                       'area' : 'float',
+                       'ndvi_avg' : 'float',
+                       'savi_avg' : 'float',
+                       'evi_avg': 'float'},
         }
 
     # Write a new Shapefile
-    with fiona.open(os.path.join(output_dir, tif_file_name.split('.')[0]), 'w',  
+    with fiona.open(os.path.join(output_dir, tif_file_name.split('.')[0]), 'w',
                     crs=crs,
-                    driver = 'ESRI Shapefile', 
-                    schema = schema) as c:
-        
+                    driver='ESRI Shapefile',
+                    schema=schema) as c:
+
         # iterate over all annotations for this tif file
         for _, row in annotations_df.iterrows():
-            
+
             # slice array to tree
-            crown_image = image_array[:, int(row['ymin']):int(row['ymax']), int(row['xmin']):int(row['xmax'])]
-            
+            crown_image = image_array[:,
+                                      int(row['ymin']):int(row['ymax']),
+                                      int(row['xmin']):int(row['xmax'])]
+
             # get bands
-            RED = crown_image[4,:,:].astype(np.float32)
-            GREEN = crown_image[2,:,:].astype(np.float32)
-            BLUE = crown_image[1,:,:].astype(np.float32)
-            NIR = crown_image[7,:,:].astype(np.float32)
-            
-             ## vegetation indices    
+            RED = crown_image[4, :, :].astype(np.float32)
+            GREEN = crown_image[2, :, :].astype(np.float32)
+            BLUE = crown_image[1, :, :].astype(np.float32)
+            NIR = crown_image[7, :, :].astype(np.float32)
+
+            ## vegetation indices
             # NDVI
             ndvi = np.where(
-                    (NIR+RED) == 0.,
-                    0,
-                    (NIR-RED)/(NIR+RED))
+                (NIR+RED) == 0.,
+                0,
+                (NIR-RED)/(NIR+RED))
             ndvi_avg = np.average(ndvi)
-            
+
             # EVI
             G = 2.5; L = 2.4; C = 1
             evi = np.where(
-                    (L+NIR+C*RED) == 0.,
-                    0,
-                    G*((NIR-RED)/(L+NIR+C*RED)))
+                (L+NIR+C*RED) == 0.,
+                0,
+                G*((NIR-RED)/(L+NIR+C*RED)))
             evi_avg = np.average(evi)
 
             # SAVI
             L = 0.5
             savi = np.where(
-                    (RED + NIR + L) == 0.,
-                    0,
-                    ((NIR - RED) / (RED + NIR + L)) * (1+L))
+                (RED + NIR + L) == 0.,
+                0,
+                ((NIR - RED) / (RED + NIR + L)) * (1+L))
             savi_avg = np.average(savi)
 
             # remove edge pixels
-            ndvi[0,:]  = 0
-            ndvi[-1,:] = 0
-            ndvi[:,0]  = 0
-            ndvi[:,-1] = 0
-        
+            ndvi[0, :] = 0
+            ndvi[-1, :] = 0
+            ndvi[:, 0] = 0
+            ndvi[:, -1] = 0
+
             # appy gaussian
-            ndvi = ndimage.filters.gaussian_filter(ndvi, sigma=2)    
+            ndvi = ndimage.filters.gaussian_filter(ndvi, sigma=2)
 
             # apply mask
             ndvi_mask = ndvi > ndvi_avg * 0.75
@@ -140,10 +137,8 @@ def generate_point_shape_files(tif_file_path, annotations_df, output_dir):
 
             x, y = map(int, ndimage.measurements.center_of_mass(ndvi_mask))
 
-            
-            # recalculate coordinates 
-            x = ((row['xmin'] + x) * x_res + (dataset.bounds.left)) 
-    
+            # recalculate coordinates
+            x = ((row['xmin'] + x) * x_res + (dataset.bounds.left))
             y = (raster_size_y - ((y + row['ymin']) * y_res)) + dataset.bounds.bottom
 
             pt = Point(x, y)
@@ -151,28 +146,25 @@ def generate_point_shape_files(tif_file_path, annotations_df, output_dir):
             c.write({
                 'geometry': mapping(pt),
                 'properties': {'score': float(row['score']),
-                            'area' : float(area),
-                            'ndvi_avg': float(ndvi_avg),
-                            'savi_avg': float(savi_avg),
-                            'evi_avg' : float(evi_avg)}
-            })
-            
-            
+                               'area' : float(area),
+                               'ndvi_avg': float(ndvi_avg),
+                               'savi_avg': float(savi_avg),
+                               'evi_avg' : float(evi_avg)}})
+
 if __name__ == '__main__':
     args = arguments()
     all_annotations_df = pd.read_csv(args['csv_file'])
 
     for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='shape_files'):
-        
+
         tif_file_path = os.path.join(
-                            args['input_dir'],
-                            tif_file_name)
+            args['input_dir'],
+            tif_file_name)
 
         # filter annotataions of this particular tif file
         annotations_df = all_annotations_df[all_annotations_df.filename == tif_file_name]
-        
-        generate_point_shape_files(
-                tif_file_path,
-                annotations_df,
-                args['output_dir'])
 
+        generate_point_shape_files(
+            tif_file_path,
+            annotations_df,
+            args['output_dir'])
