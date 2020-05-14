@@ -1,0 +1,376 @@
+---
+Treetect Training data generation notebook
+Jim Groot, Thedmer Postma, & Chris van Diemen
+Green City Watch 2020
+---
+
+Create training data from shapefiles with tree hulls and tif raster files. 
+
+INPUT: 
+- a folder with one tif file that covers the same extend as the annotation files
+- tree hulls shapefile
+
+OUTPUT:
+- image files (.png or .tif) 
+- csv file with image name and corresponding bounding boxes 
+
+```{r}
+## FUNCTIONS
+
+# get raster extend
+getExtendRasterShape <- function(shape_or_raster, projection_proj4){
+extend_raster <- bbox(shape_or_raster)
+
+ymin <- extend_raster[4]
+ymax <- extend_raster[2]
+xmin <- extend_raster[3]
+xmax <- extend_raster[1]
+
+coords = matrix(c(xmin, ymin, xmin, ymax, xmax, ymax, xmax, ymin, xmin, ymin), 
+                  ncol = 2, byrow = TRUE)
+
+P1 <- Polygon(coords)
+extend_poly <- SpatialPolygons(list(Polygons(list(P1), ID = "a")), proj4string=CRS(projection_proj4))
+
+
+return(extend_poly)
+}
+
+# function to generate coordinates for chunks 
+chunkCoordsGenerator <- function(dimension, chunkSize) {
+  
+    nr_chunks <- floor(dimension/chunkSize) + 1
+    
+  if (nr_chunks > 1){
+    coords_chunk <- seq(nr_chunks) * chunkSize - chunkSize
+  }else if(nr_chunks == 1){
+    coords_chunk <- seq(2) * chunkSize - chunkSize
+  }else if(nr_chunks == 0){
+    print('image too small')
+    break 
+  }
+  
+  coords_chunk[1] <- 1
+  
+  coords_chunk_rep <- rep(coords_chunk, each=2)
+  coords_chunk_rep_pairs <- coords_chunk_rep[3:length(coords_chunk_rep)-1]
+  
+  
+  list_coords_chunk_rep_pairs <- split(coords_chunk_rep_pairs, ceiling(seq_along(coords_chunk_rep_pairs)/2))
+  
+  return(list_coords_chunk_rep_pairs)
+}
+
+# function to create list of chunk 
+ListchunkCoordsGenerator <- function(dimensions, chunkSize){
+  
+  x_dim <- dimensions[1]
+  y_dim <- dimensions[2]
+  
+  x_coord_pairs <- chunkCoordsGenerator(x_dim, chunkSize)
+  y_coord_pairs <- chunkCoordsGenerator(y_dim, chunkSize)
+  # combn(x_coord_pairs, y_coord_pairs, FUN = NULL, simplify = TRUE)
+
+  d1 <- expand.grid(x_coord_pairs, y_coord_pairs)
+  
+  colnames(d1)[1] <- "x"
+  colnames(d1)[2] <- "y"
+
+  return(d1)
+}
+
+```
+
+
+
+```{r}
+### Load libraries
+# library(lidR)
+library(raster)
+library(colorRamps)
+library(sp)
+library(sf)
+library(rgl)
+library(rgdal)
+library(rgeos)
+library(maptools)
+library(tidyverse)
+library(magick)
+library(stringr)
+
+
+# set file specifics
+datetime_image <- '2018-07-26_10_57'
+image_id <- "10400100407D9200"
+area <- 'Amsterdam'
+nr_chunk <- "001"
+nr_total <- "224"
+
+# build file names
+site_name <- paste(area,datetime_image,image_id,'nr',nr_chunk,nr_total, sep = "_")
+
+site_name <- 'data_merged'
+
+# site_name <- 'Amsterdam_2018-09-27_11_19_103005007CF91400_nr_039_156_modified'
+
+# Get directory of this script to set working directory
+working_dir <- paste0(gsub("\\", "/", fileSnapshot()$path, fixed=TRUE),"/")
+setwd(working_dir)  # Set to working directory
+
+# check if directories exist, otherwise create directories
+dir.create(paste0("../../data/", site_name), showWarnings = FALSE) # directory to store all the data
+dir.create(paste0("../../data/", site_name, "/tif"), showWarnings = FALSE)  # store rasters in this directory
+dir.create(paste0("../../data/", site_name, "/training_data"), showWarnings = FALSE)  # store training data in this directory
+
+```
+
+
+```{r}
+
+## Define parameters
+tif_nr = 1
+bbox_nr = 1
+
+base_path <- paste0("../../data/", site_name)
+
+## LOAD INPUT DATA ##
+### TIF RASTER
+files_tif <- list.files(path = paste0(base_path, "/tif"), pattern = ".tif")
+path_tif <- paste0(base_path, "/tif/", files_tif[tif_nr])
+
+### annotation shapefiles
+files_bbox_shp <- list.files(path = paste0(base_path, "/annotations/"), pattern = ".shp")
+path_bbox_shp <- paste0(base_path, "/annotations/", files_bbox_shp[bbox_nr])
+
+### LOAD DATA
+brick_tif <- brick(path_tif)
+bbox_shapes <- readOGR(dsn = path_bbox_shp, dropNULLGeometries = True)
+
+### clip raster to bbox area 
+str_tif_proj4 <- proj4string(brick_tif)
+bboxes_bbox <- getExtendRasterShape(bbox_shapes, str_tif_proj4)
+brick_tif_clip <- crop(brick_tif, bboxes_bbox)
+# brick_tif_clip <- mask(r2, bboxes_bbox)
+# brick_tif_clip <- brick_tif
+```
+
+
+
+```{r}
+# set chunk size in pixels, chunks are square
+chunk_size = 400
+
+# minimum amount of reference trees per bbox
+min_trees = 1
+
+# set number of tiles to run
+run_all = TRUE
+run_nr = 2 # if run_all = FALSE, how many to run?
+
+# select output image type (png, tif)
+output_image_type = "tif"
+
+dimensions <- dim(brick_tif_clip)
+
+coordinate_list <- ListchunkCoordsGenerator(dimensions, chunk_size)
+## VISUAL CHECK IF NEEDED
+# plotRGB(brick_tif_clip, r = 1, g = 2, b = 3)
+
+# plotRGB(chunk, r = 1, g = 2, b = 3);plot(chunk_bbox, add = T);  plot(chunk_bboxes, add = T); plot(box, add = T)
+
+# CHECK IF DIMENSIONS ARE RIGHT
+print(paste('image size', dimensions[1],'x', dimensions[2], ' will be cut in ', length(coordinate_list$x), 'parts'))
+```
+
+
+
+```{r}
+# set csv filename
+image_name_csv <- paste0('../../data/',site_name, '/training_data/',site_name, "_annotations", ".csv")
+
+files_name_csv <- list.files(path = paste0('../../data/',site_name, "/training_data"), patter = ".csv")
+
+files_images_training <- list.files(path = paste0("../../data/", site_name, "/training_data"), pattern = paste0(".",output_image_type) )
+
+# REMOVE CSV FILES
+if (file.exists(paste0("../../data/", site_name, "/training_data/",files_name_csv[1]))) {  
+  for(file in image_name_csv){
+    file.remove(file)}; 
+  print('removed previous csv files')
+  }
+
+## REMOVE IMAGE FILES
+if (file.exists(paste0("../../data/", site_name, "/training_data/",files_images_training[1]))) {
+  for(file in files_images_training){
+    file.remove(paste0("../../data/", site_name, "/training_data/",file))}; 
+  print('removed previous image files')
+  }
+
+# set the sequence length for looping
+if(run_all){
+  run_seq <- seq(length(coordinate_list$x))
+}else{
+  
+  run_seq <- seq(run_nr)
+}
+
+# Loop over chunks 
+for (i_chunk in run_seq){
+  
+  x_min <- coordinate_list$x[i_chunk][[1]][1]
+  x_max <- coordinate_list$x[i_chunk][[1]][2]
+  y_min <- coordinate_list$y[i_chunk][[1]][1]
+  y_max <- coordinate_list$y[i_chunk][[1]][2]
+
+  print(paste('chunk nr:',i_chunk, '/', length(coordinate_list$x),'dims:', x_min, x_max, y_min, y_max))
+
+  ### Chunk NDVI raster in smaller pixel areas
+  chunk <- crop(brick_tif_clip, extent(brick_tif_clip, x_min, x_max, y_min, y_max))
+  chunk_bbox <- getExtendRasterShape(chunk, str_tif_proj4)
+
+  ### SELECT BBOXES PER BBOX
+  # fix bbox_shapes projection if needed
+  if (proj4string(bbox_shapes) != proj4string(chunk_bbox)){
+    bbox_shapes_crs_match <- spTransform(bbox_shapes, proj4string(chunk_bbox))
+  } else {
+    
+    bbox_shapes_crs_match <- bbox_shapes
+  }
+  
+  
+  
+  # works but clips bboxes on the border
+  chunk_bboxes <- gIntersection(bbox_shapes, chunk_bbox, byid = TRUE, drop_lower_td = TRUE)
+  
+  # check if this chunk is empty of boxxes
+  if (is_empty(chunk_bboxes)){
+    print('no bboxes in chunk')
+    next
+  } else if(length(chunk_bboxes) < min_trees){
+    print('not many trees in chunk')
+    next
+  }
+  
+  ### CLIP RASTER TO BBOX FOR VISUAL CHECK
+  
+  box <- chunk_bboxes[1]
+  
+  extend_bbox <- extent(box)
+  
+    ### WRITE RESULT TO FILES
+  
+  if(output_image_type == "tif") {
+  
+  ## write tif
+  image_name_tif <- paste0(str_pad(i_chunk, 3, pad = "0"), "_",site_name, ".tif")
+  image_path_tif <- paste0('../../data/',site_name, '/training_data/',image_name_tif)
+  rf <- writeRaster(chunk, filename=image_path_tif, format="GTiff", overwrite=TRUE)
+  image_name <- image_name_tif
+  
+  }else if(output_image_type == "png"){
+    
+  ## write png
+  image_name_png <- paste0(str_pad(i_chunk, 3, pad = "0"),"_", site_name, ".png")
+  image_path_png <- paste0('../../data/',site_name, '/training_data/',image_name_png)
+  png(image_path_png, width=chunk_size, height=chunk_size)
+  plotRGB(chunk, r = 1, g = 2, b = 3)
+  dev.off()
+  image_name <- image_name_png
+  
+  }else{
+    print("no image type selected")
+    break
+  }
+  
+  
+  ### RECALCULATE BBOX COORDINATES
+  
+  # extend gives extend in distance depending on projection system
+  # get distance covered over 400 pixels
+  distance_x <- (chunk@extent@xmax - chunk@extent@xmin)
+  distance_y <- (chunk@extent@ymax - chunk@extent@ymin)
+  # make sure pixels are 400x400
+  nr_pix_x <- chunk@ncols
+  nr_pix_y <- chunk@nrows
+  
+  dist_div_x <- distance_x/nr_pix_x
+  dist_div_y <- distance_y/nr_pix_y
+  
+  # replace origin of chunk 
+  chunk_extent <- chunk@extent
+  
+  chunk@extent@xmin <- 0 
+  chunk@extent@xmax <- chunk_size
+  chunk@extent@ymin <- 0
+  chunk@extent@ymax <- chunk_size
+  
+
+  # plotRGB(chunk, r = 1, g = 2, b = 3, axes = T) 
+  
+  plotRGB(chunk, r = 1, g = 2, b = 3);#plot(chunk_bbox,col='red', add = T);  # plot(chunk_bboxes, add = T); plot(box, add = T)
+  
+  
+  for (i  in seq(length(chunk_bboxes))){
+    
+    # recalculate bbox
+    coords_box <- chunk_bboxes[i,]@polygons[[1]]@Polygons[[1]]@coords
+    x_box <- ((coords_box[,1] - chunk_extent@xmin) / dist_div_x)
+    y_box <- ((coords_box[,2] - chunk_extent@ymin) / dist_div_y)
+    
+    ## Build training dataset as found in deepforest documentation: https://github.com/weecology/DeepForest
+    # format : image_path, xmin, ymin, xmax, ymax, label
+    # Two example rows: 
+    # OSBS_029.jpg,19,368,52,400,Tree
+    # OSBS_029.jpg,1,261,31,296,Tree
+    
+    xmin_box <- if(round(min(x_box)) > chunk_size){chunk_size}else{round(min(x_box))}
+    ymin_box <- if(round(min(y_box)) > chunk_size){chunk_size}else{round(min(y_box))}
+    xmax_box <- if(round(max(x_box)) > chunk_size){chunk_size}else{round(max(x_box))}
+    ymax_box <- if(round(max(y_box)) > chunk_size){chunk_size}else{round(max(y_box))}
+    
+    
+  coords = matrix(c(xmin_box, ymin_box,
+                      xmin_box, ymax_box,
+                      xmax_box, ymax_box,
+                      xmax_box, ymin_box,
+                      xmin_box, ymin_box), 
+                      ncol = 2, byrow = TRUE)
+    
+    P1 <- Polygon(coords)
+    extend_poly <- SpatialPolygons(list(Polygons(list(P1), ID = "a")))
+    
+    plot(extend_poly, col = NA, add = T)
+    
+    # y axis is the other way around in python so we have to convert
+    ymin_box_py = chunk_size - ymax_box
+    ymax_box_py = chunk_size - ymin_box 
+    
+    # change boxes rounded to 401 and replace by 400
+    
+    if (xmin_box == xmax_box | ymin_box == ymax_box){
+      print('tree box too small')
+      next
+    }
+    
+    line = paste( image_name, xmin_box, ymin_box_py, xmax_box, ymax_box_py, "tree", sep = ',')
+    write(line, file=image_name_csv ,append=TRUE)
+    
+  
+  
+  }
+  
+  
+
+}
+
+
+```
+
+
+```{r}
+plot(chunk_bboxes, col = 'red')
+```
+
+
+
+
