@@ -26,7 +26,7 @@ def arguments():
         return dictionary of command line arguments
     '''
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input_dir", help="Path to the directory containing tif files",
+    parser.add_argument("--input_dir", help="Path to the directory containing shape files",
                         type=str)
     parser.add_argument("--output_dir", help="Path to the output directory",
                         type=str)
