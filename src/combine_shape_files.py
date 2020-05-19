@@ -5,7 +5,7 @@
             - Path to output directory
     -> command to run:
         python combine_shape_files.py\
-            --input_dir=<PATH_TO_THE_DIRECTORY_CONTAINING_TIF_FILES>\
+            --input_dir=<PATH_TO_THE_DIRECTORY_CONTAINING_SHAPE_FILES>\
             --output_dir=<PATH TO THE OUTPUT DIRECTORY>
     -> Output:
         - big size shape files
