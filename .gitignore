@@ -1,4 +1,4 @@
-.env
+.vscode
 data
 test
 outputs
@@ -8,6 +8,7 @@ outputs
 __pycache__/
 *.py[cod]
 *$py.class
+
 
 # Sphinx documentation
 docs/_build/
@@ -27,3 +28,6 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+
+#big_dataset_files
+data
