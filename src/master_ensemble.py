@@ -157,7 +157,7 @@ if __name__ == "__main__":
     shutil.copy(META_DATA_JSON_PATH, ENSEMBLE_OUTPUT_DIR_PATH)
 
     s3_data_transfer(ENSEMBLE_OUTPUT_DIR_PATH,
-                    's3://' + meta_data_json['s3_data_upload_path'] + str(datetime.datetime.now()),
+                    's3://' + meta_data_json['s3_data_upload_path'] + '/' + str(datetime.datetime.now()),
                     True)
 
     for i in range(5):
