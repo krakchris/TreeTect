@@ -16,6 +16,7 @@
 # importing
 import os
 import random
+import sys
 
 import argparse
 import fiona
@@ -156,6 +157,9 @@ if __name__ == '__main__':
     all_annotations_df = pd.read_csv(args['csv_file'])
 
     for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='shape_files', file=sys.stdout):
+
+        if not tif_file_name.endswith(('.tif',)):
+            continue
 
         tif_file_path = os.path.join(
             args['input_dir'],

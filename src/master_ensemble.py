@@ -79,6 +79,7 @@ if __name__ == "__main__":
         shutil.rmtree(TEMP_DIR_PATH)
 
     os.makedirs(TEMP_DIR_PATH)
+    os.makedirs(TEMP_DOWNLOAD_PATH)
     os.makedirs(TIF_DIR_PATH)
     os.makedirs(MODEL_DIR_PATH)
     os.makedirs(ENSEMBLE_OUTPUT_DIR_PATH)
@@ -141,12 +142,12 @@ if __name__ == "__main__":
 
     print('combining shape files...')
     run_subprocess(['python',
-                    'combined_shape_files.py',
+                    'combine_shape_files.py',
                     f'--input_dir={os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, "inference_shape_files")}',
                     f'--output_dir={COMBINED_BOX_SHAPE_FILE_DIR}'])
 
     run_subprocess(['python',
-                    'combined_shape_files.py',
+                    'combine_shape_files.py',
                     f'--input_dir={POINT_DATA_DIR_PATH}',
                     f'--output_dir={COMBINED_POINT_SHAPE_FILE_DIR}'])
 
@@ -155,10 +156,9 @@ if __name__ == "__main__":
     print('uploading data on s3...')
     shutil.copy(META_DATA_JSON_PATH, ENSEMBLE_OUTPUT_DIR_PATH)
 
-    NEW_ENSEMBLED_DATA_PATH = os.path.join(TEMP_DIR_PATH, str(datetime.datetime.now()))
-    os.rename(ENSEMBLE_OUTPUT_DIR_PATH, NEW_ENSEMBLED_DATA_PATH)
-
-    s3_data_transfer(NEW_ENSEMBLED_DATA_PATH, 's3://' + meta_data_json['s3_data_upload_path'], True)
+    s3_data_transfer(ENSEMBLE_OUTPUT_DIR_PATH,
+                    's3://' + meta_data_json['s3_data_upload_path'] + str(datetime.datetime.now()),
+                    True)
 
     for i in range(5):
         print(f'system will shut down in {5-i} min')
