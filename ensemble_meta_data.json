@@ -1,0 +1,5 @@
+{
+    "model_versions": ["7.25_ssd_resnet50_fpn_coco_model", "7.21_faster_rcnn_resnet50_coco_model"],
+    "tif_dir_path": "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Boston_Dudley_street_area_2019-07-27_15_37_103001009673BC00",
+    "s3_data_upload_path": "gcw-treetect-tree-detection-dev/ensemble_results"
+}

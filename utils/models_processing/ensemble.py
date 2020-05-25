@@ -67,6 +67,9 @@ def get_inference_data(args):
         # Processing tif files
         for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='tif_files', leave=False):
 
+            if not tif_file_name.endswith(('.tif')):
+                continue
+
             tif_file_path = os.path.join(args['input_dir'], tif_file_name)
             img_np = convert_to_jpg(
                                 tif_file_path,
