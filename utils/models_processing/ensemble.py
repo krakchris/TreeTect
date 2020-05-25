@@ -58,14 +58,14 @@ def get_inference_data(args):
     tif_inference_data = defaultdict(list)
 
     # looping over all model in the directory
-    for model_file_name in tqdm(os.listdir(args['model_dir']), desc='Model_files'):
+    for model_file_name in tqdm(os.listdir(args['model_dir']), desc='Model_files', file=sys.stdout):
 
         model_file_path = os.path.join(args['model_dir'], model_file_name)
         detection_graph = get_detection_graph(model_file_path)
         band_list = model_file_name.split('_')[:3]
 
         # Processing tif files
-        for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='tif_files', leave=False):
+        for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='tif_files', leave=False, file=sys.stdout):
 
             if not tif_file_name.endswith(('.tif')):
                 continue
@@ -185,7 +185,7 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
 
-    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization'):
+    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization', file=sys.stdout):
         img_np = convert_to_jpg(
             os.path.join(args['input_dir'], tif_file_name),
             [4, 3, 2])
@@ -213,7 +213,7 @@ def generate_shape_files(optimized_tif_inference_data, args):
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
 
-    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='shape_files'):
+    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='shape_files', file=sys.stdout):
         tif_file_path = os.path.join(args['input_dir'], tif_file_name)
 
         dataset = rasterio.open(tif_file_path)
@@ -335,7 +335,7 @@ def generate_csv(optimized_tif_inference_data, args):
         writer_obj = csv.writer(csv_file)
         writer_obj.writerow(['filename', 'xmin', 'ymin', 'xmax', 'ymax', 'label', 'score'])
 
-        for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='csv_file'):
+        for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='csv_file', file=sys.stdout):
             for data in optimized_tif_inference_data[tif_file_name]:
                 writer_obj.writerow([
                     tif_file_name,

@@ -34,8 +34,9 @@ def run_subprocess(command_list):
             command_list: list of subprocesses command
     '''
     process_output = subprocess.run(command_list, stdout=sys.stdout, stderr=PIPE)
-    if process_output.stderr:
-        raise Exception(process_output.stderr)
+    
+    if 'WARNING' not in process_output.stderr.decode('utf-8') and process_output.stderr:
+        raise Exception(process_output.stderr.decode('utf-8'))
 
 def s3_data_transfer(src, dest, is_dir):
     '''
