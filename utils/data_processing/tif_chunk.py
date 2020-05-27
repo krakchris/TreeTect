@@ -6,7 +6,7 @@
             - Path to output directory
     -> command to run:
         python ensemble.py\
-            --tif_file=<PATH TO THE TIF FILES DIRECTORY>\
+            --tif_dir=<PATH TO THE TIF FILES DIRECTORY>\
             --output_dir=<PATH TO THE OUTPUT DIRECTORY>
     -> Output:
         - chunked tif files
