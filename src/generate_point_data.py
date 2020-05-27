@@ -95,9 +95,9 @@ def generate_point_shape_files(tif_file_path, annotations_df, output_dir):
                 NIR = crown_image[7, :, :].astype(np.float32)
 
             elif image_array.shape[0] == 4:
-                RED = crown_image[2, :, :].astype(np.float32)
+                RED = crown_image[0, :, :].astype(np.float32)
                 GREEN = crown_image[1, :, :].astype(np.float32)
-                BLUE = crown_image[0, :, :].astype(np.float32)
+                BLUE = crown_image[2, :, :].astype(np.float32)
                 NIR = crown_image[3, :, :].astype(np.float32)
 
             else:

@@ -42,7 +42,7 @@ def convert_to_jpg(tif_file_path, band_list):
             NIR = img[[6], :, :]
 
         elif img.shape[0] == 4:
-            RED = img[[2], :, :]
+            RED = img[[0], :, :]
             NIR = img[[3], :, :]
 
         else:

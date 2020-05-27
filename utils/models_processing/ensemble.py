@@ -260,9 +260,9 @@ def generate_shape_files(optimized_tif_inference_data, args):
                     NIR = crown_image[7, :, :].astype(np.float32)
 
                 elif image_array.shape[0] == 4:
-                    RED = crown_image[2, :, :].astype(np.float32)
+                    RED = crown_image[0, :, :].astype(np.float32)
                     GREEN = crown_image[1, :, :].astype(np.float32)
-                    BLUE = crown_image[0, :, :].astype(np.float32)
+                    BLUE = crown_image[2, :, :].astype(np.float32)
                     NIR = crown_image[3, :, :].astype(np.float32)
 
                 else:
