@@ -191,7 +191,7 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
 
     for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization', file=sys.stdout):
 
-        dataset = rasterio.open(tif_file_path)
+        dataset = rasterio.open(os.path.join(args['input_dir'], tif_file_name))
         img = dataset.read()
 
         if img.shape[0] == 8:
