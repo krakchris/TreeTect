@@ -184,14 +184,26 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
             optimized_tif_inference_data
             args : command line arguments dictionary
     '''
+
     dst_path = os.path.join(args['output_dir'], 'visualizations')
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
 
     for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization', file=sys.stdout):
-        img_np = convert_to_jpg(
-            os.path.join(args['input_dir'], tif_file_name),
-            [4, 3, 2])
+
+        dataset = rasterio.open(tif_file_path)
+        img = dataset.read()
+
+        if img.shape[0] == 8:
+            img_np = convert_to_jpg(
+                os.path.join(args['input_dir'], tif_file_name),
+                [4, 3, 2])
+        elif if img.shape[0] == 4:
+            img_np = convert_to_jpg(
+                os.path.join(args['input_dir'], tif_file_name),
+                [2, 1, 0])
+        else:
+            raise Exception('Error: Tif file is not of 4 or 8 bands')
 
         img = Image.fromarray(img_np)
         draw = ImageDraw.Draw(img)
