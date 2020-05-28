@@ -198,7 +198,7 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
             img_np = convert_to_jpg(
                 os.path.join(args['input_dir'], tif_file_name),
                 [4, 3, 2])
-        elif if img.shape[0] == 4:
+        elif img.shape[0] == 4:
             img_np = convert_to_jpg(
                 os.path.join(args['input_dir'], tif_file_name),
                 [2, 1, 0])
