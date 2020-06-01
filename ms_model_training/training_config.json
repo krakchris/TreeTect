@@ -1,0 +1,12 @@
+{
+    "model_version":"7.45",
+    "model_architecture": "test_architecture",
+    "band":[1, 2, 3],
+    "dataset":[{
+                "dataset_path" : "",
+                "training_steps" : 1
+                }
+            ],
+    "s3_base_model_dir_path": "",
+    "model_upload_path":""
+}
