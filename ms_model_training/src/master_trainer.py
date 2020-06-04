@@ -23,6 +23,7 @@ CURRENT_PATH = os.getcwd()
 
 MODEL_BASE_ARCHITECTURE_S3_PATH = 'gcw-treetect-tree-detection-dev/model_training_base_file'
 LABLE_FILE_S3_PATH = 'gcw-treetect-tree-detection-dev/model_training_base_file/label_map.pbtxt'
+S3_LOG_FILE_UPLOAD_PATH = 'gcw-treetect-tree-detection-dev/training_logs'
 
 DATASET_DIR_PATH = os.path.join(CURRENT_PATH, '..', 'dataset')
 TIF_DIR_PATH = os.path.join(DATASET_DIR_PATH, 'tif_files')
@@ -67,6 +68,8 @@ def run_subprocess(command_list, input=None):
             command_list: list of subprocesses command
             input: command line input
     '''
+    logging.info(f"\n\n{'*'*100}'\n\n'Running command :{' '.join(command_list)}\n{input}\n\n{'*'*100}\n\n")
+
     if input:
         process_output = subprocess.run(
             command_list,
@@ -78,12 +81,12 @@ def run_subprocess(command_list, input=None):
             command_list,
             stdout=sys.stdout,
             stderr=PIPE)
-    
+
     print(process_output.stderr.decode('utf-8'))
 
     e_list = ['ERROR', 'error', 'Error']
     if any(word in process_output.stderr.decode('utf-8') for word in e_list):
-        logging.error(f"\n\n{'#'*100}'\n\n'{process_output.stderr.decode('utf-8')}\n\n{'#'*100}'\n\n'")
+        logging.error(f"\n\n{'#'*100}'\n\n'{process_output.stderr.decode('utf-8')}\n\n{'#'*100}\n\n")
         raise Exception(process_output.stderr.decode('utf-8'))
 
 def s3_data_transfer(src, dest, is_dir):
@@ -165,163 +168,182 @@ def generate_training_data(s3_dataset_path, band):
 
 if __name__ == "__main__":
 
-    # --------------------------------loading json file-----------------------------------------
+    try:
+        status = 'success'
+        # --------------------------------loading json file-----------------------------------------
 
-    logging.info('Reading config file.')
-    with open(TRAINING_CONFIG_JSON_PATH, "r") as config_file:
-        meta_data_json = json.load(config_file)
+        logging.info('Reading config file.')
+        with open(TRAINING_CONFIG_JSON_PATH, "r") as config_file:
+            meta_data_json = json.load(config_file)
 
-    # ----------------------download base model path and rename according to version----------------
+        # ----------------------download base model path and rename according to version------------
 
-    logging.info('Downloading base model files...')
-    print('Downloading base model files...')
-    model_files_dir = os.path.join(
-        CURRENT_PATH,
-        '..',
-        f"{meta_data_json['model_version']}_{meta_data_json['model_architecture']}")
+        logging.info('Downloading base model files...')
+        print('Downloading base model files...')
+        model_files_dir = os.path.join(
+            CURRENT_PATH,
+            '..',
+            f"{meta_data_json['model_version']}_{meta_data_json['model_architecture']}")
 
-#     s3_data_transfer(
-#                 's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
-#                                        meta_data_json['model_architecture']),
-#                 model_files_dir,
-#                 True)
-
-    # ---------------------------- iteration over dataset and start training -----------------------
-    for iteration_no, dataset_info in enumerate(meta_data_json['dataset']):
-
-        logging.info(f'Generate training data for {iteration_no}th iteration ')
-#         generate_training_data(dataset_info['dataset_path'], meta_data_json['band'])
-
-        # -----------------------------------update config----------------------------------------
-
-        print(f'iteration: {iteration_no}  :Updating model config file...')
-        logging.info(f'iteration: {iteration_no}  :Updating model config file')
-
-        model_config_path = glob.glob(os.path.join(model_files_dir, '*.config'))[0]
-
-        pipeline = pipeline_pb2.TrainEvalPipelineConfig()
-
-        with tf.gfile.GFile(model_config_path, "r") as f:
-            proto_str = f.read()
-            text_format.Merge(proto_str, pipeline)
-
-        pipeline.train_config.fine_tune_checkpoint = os.path.join(
+        s3_data_transfer(
+            's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
+                                   meta_data_json['model_architecture']),
             model_files_dir,
-            f"base_model_{meta_data_json['model_architecture']}",
-            'model.ckpt')
-        pipeline.train_config.num_steps = dataset_info['training_steps']
-        pipeline.train_config.batch_size = meta_data_json['batch_size']
+            True)
 
-        pipeline.train_input_reader.label_map_path = LABEL_MAP_PATH
-        pipeline.train_input_reader.tf_record_input_reader.input_path[:] = [TRAIN_TFRECORD_PATH]
+        # --------------------------- iteration over dataset and start training --------------------
+        for iteration_no, dataset_info in enumerate(meta_data_json['dataset']):
 
-        df = pd.read_csv(TEST_CSV_PATH)
-        unique_file_count = df['filename'].unique().size
+            logging.info(f'Generate training data for {iteration_no}th iteration ')
+            generate_training_data(dataset_info['dataset_path'], meta_data_json['band'])
 
-        vis_dir = os.path.join(model_files_dir, 'eval', 'visualizations')
-        if not os.path.exists(vis_dir):
-            os.makedirs(vis_dir)
+            # ----------------------------------update config---------------------------------------
 
-        pipeline.eval_config.max_evals = 1
-        pipeline.eval_config.num_visualizations = unique_file_count
-        pipeline.eval_config.num_examples = unique_file_count
-        pipeline.eval_config.visualization_export_dir = vis_dir
+            print(f'iteration: {iteration_no}  :Updating model config file...')
+            logging.info(f'iteration: {iteration_no}  :Updating model config file')
 
-        pipeline.eval_input_reader[0].label_map_path = LABEL_MAP_PATH
-        pipeline.eval_input_reader[0].tf_record_input_reader.input_path[:] = [TEST_TFRECORD_PATH]
+            model_config_path = glob.glob(os.path.join(model_files_dir, '*.config'))[0]
 
-        config_text = text_format.MessageToString(pipeline)
-        with tf.gfile.Open(model_config_path, "wb") as f:
-            f.write(config_text)
+            pipeline = pipeline_pb2.TrainEvalPipelineConfig()
 
-        # ------------------------------------------training----------------------------------------
+            with tf.gfile.GFile(model_config_path, "r") as f:
+                proto_str = f.read()
+                text_format.Merge(proto_str, pipeline)
 
-        print(f'iteration: {iteration_no}  :Start training..')
-        logging.info(f'iteration: {iteration_no}  :Start training')
+            pipeline.train_config.fine_tune_checkpoint = os.path.join(
+                model_files_dir,
+                f"base_model_{meta_data_json['model_architecture']}",
+                'model.ckpt')
+            pipeline.train_config.num_steps = dataset_info['training_steps']
+            pipeline.train_config.batch_size = meta_data_json['batch_size']
 
+            pipeline.train_input_reader.label_map_path = LABEL_MAP_PATH
+            pipeline.train_input_reader.tf_record_input_reader.input_path[:] = [TRAIN_TFRECORD_PATH]
+
+            df = pd.read_csv(TEST_CSV_PATH)
+            unique_file_count = df['filename'].unique().size
+
+            vis_dir = os.path.join(model_files_dir, 'eval', 'visualizations')
+            if not os.path.exists(vis_dir):
+                os.makedirs(vis_dir)
+
+            pipeline.eval_config.max_evals = 1
+            pipeline.eval_config.num_visualizations = unique_file_count
+            pipeline.eval_config.num_examples = unique_file_count
+            pipeline.eval_config.visualization_export_dir = vis_dir
+
+            pipeline.eval_input_reader[0].label_map_path = LABEL_MAP_PATH
+            pipeline.eval_input_reader[0].tf_record_input_reader.input_path[:] = [TEST_TFRECORD_PATH]
+
+            config_text = text_format.MessageToString(pipeline)
+            with tf.gfile.Open(model_config_path, "wb") as f:
+                f.write(config_text)
+
+            # ------------------------------------------training------------------------------------
+
+            print(f'iteration: {iteration_no}  :Start training..')
+            logging.info(f'iteration: {iteration_no}  :Start training')
+
+            run_subprocess([
+                'python',
+                'train.py',
+                '--logtostderr',
+                f'--train_dir={os.path.join(model_files_dir, "training")}',
+                f'--pipeline_config_path={model_config_path}'])
+
+            # ------------------------------------copying training checkpoints----------------------
+
+            print(f'iteration: {iteration_no}  :Copying checkpoint data...')
+            logging.info(f'iteration: {iteration_no}  :Copying checkpoint data')
+
+            shutil.copytree(os.path.join(model_files_dir, 'training'),
+                            os.path.join(model_files_dir,
+                                         f"{iteration_no}_checkpoint_{meta_data_json['model_architecture']}"))
+
+        # --------------------------------running evaluation for latest checkpoints-----------------
+
+        print('Running evaluation...')
+        logging.info('Running evaluation')
         run_subprocess([
             'python',
-            'train.py',
+            'modified_eval.py',
             '--logtostderr',
-            f'--train_dir={os.path.join(model_files_dir, "training")}',
-            f'--pipeline_config_path={model_config_path}'])
+            f'--pipeline_config_path={model_config_path}',
+            f'--checkpoint_dir={os.path.join(model_files_dir, "training")}',
+            f'--eval_dir={os.path.join(model_files_dir, "eval")}',
+            f'--output_json_path={os.path.join(model_files_dir, "evaluation_results.json")}'])
 
-        # ------------------------------------copying training checkpoints--------------------------
+        # ----------------------------------freeze model----------------------------------------------
 
-        print(f'iteration: {iteration_no}  :Copying checkpoint data...')
-        logging.info(f'iteration: {iteration_no}  :Copying checkpoint data')
+        print('Freezing model graph...')
+        logging.info('Freezing model graph')
+        pipeline_config_path = os.path.join(model_files_dir, 'training', 'pipeline.config')
 
-        shutil.copytree(os.path.join(model_files_dir, 'training'),
-                        os.path.join(model_files_dir,
-                                     f"{iteration_no}_checkpoint_{meta_data_json['model_architecture']}"))
+        max_checkpoint_number = max([int(file_name.split('.')[1].split('-')[-1])
+                                     for file_name in os.listdir(os.path.join(model_files_dir,
+                                                                              'training'))
+                                     if file_name.endswith(('.index'))])
 
-    # --------------------------------running evaluation for latest checkpoints---------------------
+        trained_checkpoint_prefix = os.path.join(model_files_dir,
+                                                 'training',
+                                                 f"model.ckpt-{max_checkpoint_number}")
 
-    print('Running evaluation...')
-    logging.info('Running evaluation')
-    run_subprocess([
-                'python',
-                'modified_eval.py',
-                '--logtostderr',
-                f'--pipeline_config_path={model_config_path}',
-                f'--checkpoint_dir={os.path.join(model_files_dir, "training")}',
-                f'--eval_dir={os.path.join(model_files_dir, "eval")}',
-                f'--output_json_path={os.path.join(model_files_dir, "evaluation_results.json")}'])
+        run_subprocess(['python',
+                        'export_inference_graph.py',
+                        '--input_type=image_tensor',
+                        f'--pipeline_config_path={pipeline_config_path}',
+                        f'--trained_checkpoint_prefix={trained_checkpoint_prefix}',
+                        f'--output_directory={os.path.join(model_files_dir, "output_inference_graph")}'])
 
-    # ----------------------------------freeze model------------------------------------------------
+        # ---------------------------------creating meta file---------------------------------------
 
-    print('Freezing model graph...')
-    logging.info('Freezing model graph')
-    pipeline_config_path = os.path.join(model_files_dir, 'training', 'pipeline.config')
+        print('creating meta.txt file...')
+        logging.info('creating meta.txt file.')
 
-    max_checkpoint_number = max([int(file_name.split('.')[1].split('-')[-1])
-                                 for file_name in os.listdir(os.path.join(model_files_dir,
-                                                                          'training'))
-                                 if file_name.endswith(('.index'))])
+        with open(os.path.join(model_files_dir, 'meta_data.txt'), 'w') as meta_txt_file:
 
-    trained_checkpoint_prefix = os.path.join(model_files_dir,
-                                             'training',
-                                             f"model.ckpt-{max_checkpoint_number}")
+            meta_txt_file.write(f'model_version:{meta_data_json["model_version"]}\n')
+            meta_txt_file.write(f'model_architecture:{meta_data_json["model_architecture"]}\n')
+            meta_txt_file.write(f'band:{", ".join(meta_data_json["band"])}\n')
 
-    run_subprocess(['python',
-                    'export_inference_graph.py',
-                    '--input_type=image_tensor',
-                    f'--pipeline_config_path={pipeline_config_path}',
-                    f'--trained_checkpoint_prefix={trained_checkpoint_prefix}',
-                    f'--output_directory={os.path.join(model_files_dir, "output_inference_graph")}'])
+            for index, dataset_info in enumerate(meta_data_json['dataset']):
+                meta_txt_file.write(f'dataset_path_{index}:{dataset_info["dataset_path"]}\n')
+                meta_txt_file.write(f'training_steps_{index}:{dataset_info["training_steps"]}\n')
 
-    # ---------------------------------creating meta file-------------------------------------------
+        # --------------------------------remove unnecessary files ---------------------------------
 
-    print('creating meta.txt file...')
-    logging.info('creating meta.txt file.')
+        print('Removing training and base folder...')
+        logging.info('Removing training and base folder')
+        shutil.rmtree(os.path.join(model_files_dir, 'training'))
+        shutil.rmtree(os.path.join(model_files_dir,
+                                   f"base_model_{meta_data_json['model_architecture']}"))
 
-    with open(os.path.join(model_files_dir, 'meta_data.txt'), 'w') as meta_txt_file:
+        # ---------------------------------copy log file to the model folder------------------------
 
-        meta_txt_file.write(f'model_version:{meta_data_json["model_version"]}\n')
-        meta_txt_file.write(f'model_architecture:{meta_data_json["model_architecture"]}\n')
-        meta_txt_file.write(f'band:{"", "".join(meta_data_json["band"])}\n')
+        print('Copying log file...')
+        logging.info('Copying log file into model dir')
+        shutil.copy(LOG_FILE_PATH, os.path.join(model_files_dir))
 
-        for index, dataset_info in enumerate(meta_data_json['dataset']):
-            meta_txt_file.write(f'dataset_path_{index}:{dataset_info["dataset_path"]}\n')
-            meta_txt_file.write(f'training_steps_{index}:{dataset_info["training_steps"]}\n')
+        # --------------------------------uploading data to s3--------------------------------------
 
-    # --------------------------------remove unnecessary files -------------------------------------
+        print('Uploading training files to s3...')
+        logging.info('Uploading training files to s3')
+        s3_data_transfer(model_files_dir,
+                         's3://'+meta_data_json['s3_model_upload_path'] + '/' + model_files_dir,
+                         True)
 
-    print('Removing training and base folder...')
-    logging.info('Removing training and base folder')
-    shutil.rmtree(os.path.join(model_files_dir, 'training'))
-    shutil.rmtree(os.path.join(model_files_dir,
-                               f"base_model_{meta_data_json['model_architecture']}"))
+    except Exception as e:
+        status = 'failure'
+        print(str(e))
+        logging.error(f"\n\n{'#'*100}'\n\n'{str(e)}\n\n{'#'*100}\n\n")
 
-    # --------------------------------uploading data to s3------------------------------------------
+    finally:
 
-    print('Uploading training files to s3...')
-    logging.info('Uploading training files to s3')
-    s3_data_transfer(model_files_dir, 's3://'+meta_data_json['s3_model_upload_path'], True)
+        # ---------------------------------send notification and shutdown---------------------------
 
-    # ---------------------------------copy log file to the model folder----------------------------
-    print('Copying log file...')
-    logging.info('Copying log file into model dir')
-    shutil.copy(LOG_FILE_PATH, os.path.join(model_files_dir))
-
-    # ---------------------------------send notification and shutdown-----------------------PENDING
+        print('uploading log file to s3....')
+        logging.info('uploading log file to s3')
+        s3_data_transfer(
+            LOG_FILE_PATH,
+            f"{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_taining.log",
+            False)
