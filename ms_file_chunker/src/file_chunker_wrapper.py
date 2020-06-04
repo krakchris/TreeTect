@@ -121,7 +121,7 @@ if __name__ == "__main__":
         logging.error(f"\n\n{'#'*100}\n\n{str(e)}\n\n{'#'*100}\n\n")
 
     finally:
-        logging.log('Uploading log file to s3')
+        logging.info('Uploading log file to s3')
         print('Uploading log file to s3')
 
         s3_data_transfer(
