@@ -12,6 +12,7 @@ from subprocess import PIPE
 import sys
 
 import pandas as pd
+import shortuuid
 import shutil
 import tensorflow as tf
 
@@ -21,27 +22,16 @@ from object_detection.protos import pipeline_pb2
 #CONSTANTS
 CURRENT_PATH = os.getcwd()
 
-MODEL_BASE_ARCHITECTURE_S3_PATH = 'gcw-treetect-tree-detection-dev/model_training_base_file'
-LABLE_FILE_S3_PATH = 'gcw-treetect-tree-detection-dev/model_training_base_file/label_map.pbtxt'
-S3_LOG_FILE_UPLOAD_PATH = 'gcw-treetect-tree-detection-dev/training_logs'
+MODEL_BASE_ARCHITECTURE_S3_PATH = os.environ['MODEL_BASE_ARCHITECTURE_S3_PATH']
+LABLE_FILE_S3_PATH = os.environ['LABLE_FILE_S3_PATH']
+S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
+S3_MODEL_UPLOAD_PATH = os.environ['S3_MODEL_UPLOAD_PATH']
 
 DATASET_DIR_PATH = os.path.join(CURRENT_PATH, '..', 'dataset')
 TIF_DIR_PATH = os.path.join(DATASET_DIR_PATH, 'tif_files')
 IMAGE_DIR_PATH = os.path.join(DATASET_DIR_PATH, 'image_files')
 
-TEST_PORTION = 0.2
-TRAIN_TEST_SPLIT_SCRIPT_PATH = os.path.join(
-        '..',
-        '..',
-        'utils',
-        'data_processing',
-        'generate_train_test_split_from_csv.py')
-CONVERT_TIF_INTO_JPG_CONVERSION_SCRIPT_PATH = os.path.join(
-        '..',
-        '..',
-        'utils',
-        'data_processing',
-        'convert_tiff_into_jpeg.py')
+CONVERT_TIF_INTO_JPG_CONVERSION_SCRIPT_PATH = 'convert_tiff_into_jpeg.py'
 
 TRAINING_CONFIG_JSON_PATH = os.path.join('..', 'training_config.json')
 LOG_FILE_PATH = os.path.join('..', 'training.log')
@@ -329,7 +319,7 @@ if __name__ == "__main__":
         print('Uploading training files to s3...')
         logging.info('Uploading training files to s3')
         s3_data_transfer(model_files_dir,
-                         's3://'+meta_data_json['s3_model_upload_path'] + '/' + model_files_dir.split('/')[-1],
+                         's3://'+ S3_MODEL_UPLOAD_PATH + '/' + model_files_dir.split('/')[-1],
                          True)
 
     except Exception as e:
@@ -345,5 +335,5 @@ if __name__ == "__main__":
         logging.info('uploading log file to s3')
         s3_data_transfer(
             LOG_FILE_PATH,
-            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_taining.log",
+            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_taining_{shortuuid.uuid()}.log",
             False)
