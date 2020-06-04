@@ -101,7 +101,7 @@ if __name__ == "__main__":
 
         run_subprocess([
             'python',
-            'FileChunker.py',
+            'file_chunker.py',
             f'--tif_dir={INPUT_DIR}',
             f'--output_dir={OUTPUT_DIR}'])
 
