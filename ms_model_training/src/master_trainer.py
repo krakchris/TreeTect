@@ -329,7 +329,7 @@ if __name__ == "__main__":
         print('Uploading training files to s3...')
         logging.info('Uploading training files to s3')
         s3_data_transfer(model_files_dir,
-                         's3://'+meta_data_json['s3_model_upload_path'] + '/' + model_files_dir,
+                         's3://'+meta_data_json['s3_model_upload_path'] + '/' + model_files_dir.split('/')[-1],
                          True)
 
     except Exception as e:
@@ -344,6 +344,6 @@ if __name__ == "__main__":
         print('uploading log file to s3....')
         logging.info('uploading log file to s3')
         s3_data_transfer(
-            LOG_FILE_PATH,
+            's3:// + 'LOG_FILE_PATH,
             f"{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_taining.log",
             False)
