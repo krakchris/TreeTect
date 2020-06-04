@@ -37,7 +37,7 @@ def run_subprocess(command_list, input=None):
             command_list: list of subprocesses command
             input: command line input
     '''
-    logging.info(f"\n\n{'*'*100}'\n\n'Running command :{' '.join(command_list)}\n{input}\n\n{'*'*100}\n\n")
+    logging.info(f"\n\n{'*'*100}\n\nRunning command :{' '.join(command_list)}\n{input}\n\n{'*'*100}\n\n")
 
     if input:
         process_output = subprocess.run(
