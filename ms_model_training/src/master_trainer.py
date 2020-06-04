@@ -72,17 +72,18 @@ def run_subprocess(command_list, input=None):
             command_list,
             input=input,
             stdout=sys.stdout,
-            stderr=PIPE,
-            encoding=ascii)
+            stderr=PIPE)
     else:
         process_output = subprocess.run(
             command_list,
             stdout=sys.stdout,
             stderr=PIPE)
+    
+    print(process_output.stderr.decode('utf-8'))
 
     e_list = ['ERROR', 'error', 'Error']
     if any(word in process_output.stderr.decode('utf-8') for word in e_list):
-        logging.error(f"{'#'*20}'\n\n'{process_output.decode('utf-8')}{'#'*20}'\n\n'")
+        logging.error(f"\n\n{'#'*100}'\n\n'{process_output.stderr.decode('utf-8')}\n\n{'#'*100}'\n\n'")
         raise Exception(process_output.stderr.decode('utf-8'))
 
 def s3_data_transfer(src, dest, is_dir):
@@ -118,7 +119,7 @@ def generate_training_data(s3_dataset_path, band):
     #------------------------------Download tif files-----------------------------------------------
 
     print('-- Downloading tif data from', s3_dataset_path)
-    logging.info('Downloading tif data from : {s3_dataset_path}')
+    logging.info(f'Downloading tif data from : {s3_dataset_path}')
     s3_data_transfer('s3://' + s3_dataset_path, TIF_DIR_PATH, True)
 
     # ----------------------------- Check CSV file in dir-------------------------------------------
@@ -136,7 +137,7 @@ def generate_training_data(s3_dataset_path, band):
                 CONVERT_TIF_INTO_JPG_CONVERSION_SCRIPT_PATH,
                 f'--input_dir={TIF_DIR_PATH}',
                 f'--output_dir={IMAGE_DIR_PATH}'],
-                   input=', '.join(band))
+                   input=(', '.join(band) + '\nz\n').encode())
 
     # ---------------------Generating tf record-----------------------------------------------------
 
@@ -179,17 +180,17 @@ if __name__ == "__main__":
         '..',
         f"{meta_data_json['model_version']}_{meta_data_json['model_architecture']}")
 
-    s3_data_transfer(
-                's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
-                                       meta_data_json['model_architecture']),
-                model_files_dir,
-                True)
+#     s3_data_transfer(
+#                 's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
+#                                        meta_data_json['model_architecture']),
+#                 model_files_dir,
+#                 True)
 
     # ---------------------------- iteration over dataset and start training -----------------------
     for iteration_no, dataset_info in enumerate(meta_data_json['dataset']):
 
         logging.info(f'Generate training data for {iteration_no}th iteration ')
-        generate_training_data(dataset_info['dataset_path'], meta_data_json['band'])
+#         generate_training_data(dataset_info['dataset_path'], meta_data_json['band'])
 
         # -----------------------------------update config----------------------------------------
 
@@ -212,7 +213,7 @@ if __name__ == "__main__":
         pipeline.train_config.batch_size = meta_data_json['batch_size']
 
         pipeline.train_input_reader.label_map_path = LABEL_MAP_PATH
-        pipeline.train_input_reader.tf_record_input_reader.input_path = TRAIN_TFRECORD_PATH
+        pipeline.train_input_reader.tf_record_input_reader.input_path[:] = [TRAIN_TFRECORD_PATH]
 
         df = pd.read_csv(TEST_CSV_PATH)
         unique_file_count = df['filename'].unique().size
@@ -226,8 +227,8 @@ if __name__ == "__main__":
         pipeline.eval_config.num_examples = unique_file_count
         pipeline.eval_config.visualization_export_dir = vis_dir
 
-        pipeline.eval_input_reader.label_map_path = LABEL_MAP_PATH
-        pipeline.eval_input_reader.tf_record_input_reader.input_path = TEST_TFRECORD_PATH
+        pipeline.eval_input_reader[0].label_map_path = LABEL_MAP_PATH
+        pipeline.eval_input_reader[0].tf_record_input_reader.input_path[:] = [TEST_TFRECORD_PATH]
 
         config_text = text_format.MessageToString(pipeline)
         with tf.gfile.Open(model_config_path, "wb") as f:

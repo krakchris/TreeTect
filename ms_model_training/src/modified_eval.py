@@ -139,8 +139,12 @@ def main(unused_argv):
                   FLAGS.eval_dir,
                   graph_hook_fn=graph_rewriter_fn)
 
-  with open(output_json_path, 'w') as op_json_file:
-    json.dump(metrics_dict, op_json_file)
+  with open(FLAGS.output_json_path, 'w') as op_json_file:
+    temp_dict = {}
+    for key, value in metrics_dict.items():
+        temp_dict[key] = str(value)
+        
+    json.dump(temp_dict, op_json_file)
   
 if __name__ == '__main__':
   tf.app.run()
