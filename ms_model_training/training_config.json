@@ -1,13 +1,13 @@
 {
     "model_version":"7.45",
-    "model_architecture": "test_architecture",
+    "model_architecture": "faster_rcnn_resnet101_coco_model",
     "band":["1", "2", "ndvi"],
     "batch_size":1,
     "dataset":[{
-                "dataset_path" : "",
-                "training_steps" : 1
+                "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified_400X400",
+                "training_steps" : 5
                 }
             ],
-    "s3_base_model_dir_path": "",
-    "s3_model_upload_path":""
+    "s3_base_model_dir_path": "gcw-treetect-tree-detection-dev/model_training_base_file",
+    "s3_model_upload_path":"gcw-treetect-tree-detection-dev/temp_data/demo_img"
 }

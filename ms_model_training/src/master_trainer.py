@@ -86,7 +86,7 @@ def run_subprocess(command_list, input=None):
 
     e_list = ['ERROR', 'error', 'Error']
     if any(word in process_output.stderr.decode('utf-8') for word in e_list):
-        logging.error(f"\n\n{'#'*100}'\n\n'{process_output.stderr.decode('utf-8')}\n\n{'#'*100}\n\n")
+        logging.error(f"\n\n{'#'*100}\n\n{process_output.stderr.decode('utf-8')}\n\n{'#'*100}\n\n")
         raise Exception(process_output.stderr.decode('utf-8'))
 
 def s3_data_transfer(src, dest, is_dir):
@@ -344,6 +344,6 @@ if __name__ == "__main__":
         print('uploading log file to s3....')
         logging.info('uploading log file to s3')
         s3_data_transfer(
-            's3:// + 'LOG_FILE_PATH,
-            f"{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_taining.log",
+            LOG_FILE_PATH,
+            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_taining.log",
             False)
