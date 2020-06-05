@@ -1,8 +1,0 @@
-{
-    "model_versions": ["8.1_faster_rcnn_resnet101_coco_model",
-                       "8.3_faster_rcnn_resnet101_coco_model",
-		       "8.4_faster_rcnn_resnet101_coco_model",
-		       "8.7_faster_rcnn_resnet101_coco_model"],
-    "tif_dir_path": "gcw-treetect-common-input-data-dev/input_data/chunked_data/Pleiades/Commerce_City/Commerce_City_18_08_2013_PLEIADES_FLOAT32/",
-    "s3_data_upload_path": "gcw-treetect-tree-detection-dev/ensemble_results"
-}

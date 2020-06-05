@@ -125,7 +125,7 @@ if __name__ == "__main__":
                 break
 
         # processing each tif files
-        for tif_file in tqdm(os.listdir(args['input_dir'])):
+        for tif_file in tqdm(os.listdir(args['input_dir']), file=sys.stdout):
 
             if not tif_file.endswith(('.tif')):
                 continue

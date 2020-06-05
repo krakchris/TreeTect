@@ -34,9 +34,9 @@ from shapely.geometry import Polygon, mapping, box
 from scipy.ndimage.filters import gaussian_filter
 from tqdm import tqdm
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/..") # for sibling import
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../..") # for sibling import
 from  model_test import *
-from data_processing.convert_tiff_into_jpeg import convert_to_jpg
+from utils.convert_tiff_into_jpeg import convert_to_jpg
 
 def get_inference_data(args):
     '''
@@ -65,7 +65,10 @@ def get_inference_data(args):
         band_list = model_file_name.split('_')[:3]
 
         # Processing tif files
-        for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='tif_files', leave=False, file=sys.stdout):
+        for tif_file_name in tqdm(os.listdir(args['input_dir']),
+                                  desc='tif_files',
+                                  leave=False,
+                                  file=sys.stdout):
 
             if not tif_file_name.endswith(('.tif')):
                 continue
@@ -189,7 +192,9 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
 
-    for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization', file=sys.stdout):
+    for tif_file_name in tqdm(optimized_tif_inference_data.keys(),
+                              desc='visualization',
+                              file=sys.stdout):
 
         dataset = rasterio.open(os.path.join(args['input_dir'], tif_file_name))
         img = dataset.read()
