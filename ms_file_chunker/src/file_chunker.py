@@ -18,7 +18,6 @@ import slidingwindow as sw
 from shapely.geometry import Polygon
 from tqdm import tqdm
 
-
 def arguments():
     '''
         command line arguments
@@ -31,7 +30,6 @@ def arguments():
                         type=str)
 
     return vars(parser.parse_args())
-
 
 if __name__ == "__main__":
 

@@ -37,26 +37,21 @@ def run_subprocess(command_list, input=None):
             command_list: list of subprocesses command
             input: command line input
     '''
-    logging.info(f"\n\n{'*'*100}\n\nRunning command :{' '.join(command_list)}\n{input}\n\n{'*'*100}\n\n")
+    logging.info(f"\n\n{'*'*100}'\n\n'Running command :{' '.join(command_list)}\n{input}\n\n{'*'*100}\n\n")
 
     if input:
         process_output = subprocess.run(
             command_list,
             input=input,
             stdout=sys.stdout,
-            stderr=PIPE)
+            stderr=sys.stdout,
+            check=True)
     else:
         process_output = subprocess.run(
             command_list,
             stdout=sys.stdout,
-            stderr=PIPE)
-
-    print(process_output.stderr.decode('utf-8'))
-
-    e_list = ['ERROR', 'error', 'Error']
-    if any(word in process_output.stderr.decode('utf-8') for word in e_list):
-        logging.error(f"\n\n{'#'*100}\n\n{process_output.stderr.decode('utf-8')}\n\n{'#'*100}\n\n")
-        raise Exception(process_output.stderr.decode('utf-8'))
+            stderr=sys.stdout,
+            check=True)
 
 def s3_data_transfer(src, dest, is_dir):
     '''
