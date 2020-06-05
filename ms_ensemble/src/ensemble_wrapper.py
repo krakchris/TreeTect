@@ -30,6 +30,9 @@ COMBINED_POINT_SHAPE_FILE_DIR = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'combined
 LABEL_FILE_PATH = os.path.join(TEMP_DIR_PATH, 'labelmap.pbtxt')
 LOG_FILE_PATH = os.path.join('..', 'ensemble.log')
 META_DATA_JSON_PATH = '../ensemble_meta_data.json'
+ENSEMBLE_SCRIPT_PATH = 'ensemble.py'
+GENERATE_POINT_DATA_SCRIPT_PATH = '../../utils/generate_point_data.py'
+COMBINE_SHAPE_FILE_SCRIPT_PATH = '../../utils/combine_shape_files.py'
 
 #logger
 if os.path.exists(LOG_FILE_PATH):
@@ -154,7 +157,7 @@ if __name__ == "__main__":
         print('running ensembling process...')
         logging.info('staring ensembling process')
         run_subprocess(['python',
-                        '../utils/models_processing/ensemble.py',
+                        ENSEMBLE_SCRIPT_PATH,
                         f'--model_dir={MODEL_DIR_PATH}',
                         f'--input_dir={TIF_DIR_PATH}',
                         f'--output_dir={ENSEMBLE_OUTPUT_DIR_PATH}',
@@ -166,7 +169,7 @@ if __name__ == "__main__":
         print('generating point data...')
         logging.info('generating point data')
         run_subprocess(['python',
-                        'generate_point_data.py',
+                        GENERATE_POINT_DATA_SCRIPT_PATH,
                         f'--input_dir={TIF_DIR_PATH}',
                         f'--csv_file={os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, "annotations.csv")}',
                         f'--output_dir={POINT_DATA_DIR_PATH}'])
@@ -176,12 +179,12 @@ if __name__ == "__main__":
         print('combining shape files...')
         logging.info('combining shape files')
         run_subprocess(['python',
-                        'combine_shape_files.py',
+                        COMBINE_SHAPE_FILE_SCRIPT_PATH,
                         f'--input_dir={os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, "inference_shape_files")}',
                         f'--output_dir={COMBINED_BOX_SHAPE_FILE_DIR}'])
 
         run_subprocess(['python',
-                        'combine_shape_files.py',
+                        COMBINE_SHAPE_FILE_SCRIPT_PATH,
                         f'--input_dir={POINT_DATA_DIR_PATH}',
                         f'--output_dir={COMBINED_POINT_SHAPE_FILE_DIR}'])
 
