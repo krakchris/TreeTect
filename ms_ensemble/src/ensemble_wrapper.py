@@ -13,34 +13,6 @@ import sys
 import shutil
 import shortuuid
 
-#CONSTANTS
-S3_MODEL_DIR_BASE_PATH = os.environ['S3_MODEL_DIR_BASE_PATH']
-S3_DATA_UPLOAD_PATH = os.environ['S3_DATA_UPLOAD_PATH']
-S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
-
-TEMP_DIR_PATH = '../temp_files'
-TIF_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'tif_dir')
-MODEL_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'model_files')
-TEMP_DOWNLOAD_PATH = os.path.join(TEMP_DIR_PATH, 'temp_download/')
-ENSEMBLE_OUTPUT_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'ensemble_output')
-POINT_DATA_DIR_PATH = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'point_data')
-COMBINED_BOX_SHAPE_FILE_DIR = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'combined_box_shape_file')
-COMBINED_POINT_SHAPE_FILE_DIR = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'combined_point_shape_file')
-
-LABEL_FILE_PATH = os.path.join(TEMP_DIR_PATH, 'labelmap.pbtxt')
-LOG_FILE_PATH = os.path.join('..', 'ensemble.log')
-META_DATA_JSON_PATH = '../ensemble_meta_data.json'
-
-#logger
-if os.path.exists(LOG_FILE_PATH):
-    os.remove(LOG_FILE_PATH)
-
-logging.basicConfig(filename=LOG_FILE_PATH,
-                    filemode='a',
-                    format='%(asctime)s - %(message)s',
-                    level=logging.INFO,
-                    datefmt='%d-%b-%y %H:%M:%S')
-
 def run_subprocess(command_list, input=None):
     '''
         Method to run command line process
@@ -102,6 +74,35 @@ def get_meta_dict(meta_file_path):
 if __name__ == "__main__":
 
     try:
+        #CONSTANTS
+        S3_MODEL_DIR_BASE_PATH = os.environ['S3_MODEL_DIR_BASE_PATH']
+        S3_DATA_UPLOAD_PATH = os.environ['S3_DATA_UPLOAD_PATH']
+        S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
+
+        TEMP_DIR_PATH = '../temp_files'
+        TIF_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'tif_dir')
+        MODEL_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'model_files')
+        TEMP_DOWNLOAD_PATH = os.path.join(TEMP_DIR_PATH, 'temp_download/')
+        ENSEMBLE_OUTPUT_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'ensemble_output')
+        POINT_DATA_DIR_PATH = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'point_data')
+        COMBINED_BOX_SHAPE_FILE_DIR = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'combined_box_shape_file')
+        COMBINED_POINT_SHAPE_FILE_DIR = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'combined_point_shape_file')
+
+        LABEL_FILE_PATH = os.path.join(TEMP_DIR_PATH, 'labelmap.pbtxt')
+        LOG_FILE_PATH = os.path.join('..', 'ensemble.log')
+        META_DATA_JSON_PATH = '../ensemble_meta_data.json'
+
+        #logger
+        if os.path.exists(LOG_FILE_PATH):
+            os.remove(LOG_FILE_PATH)
+
+        logging.basicConfig(filename=LOG_FILE_PATH,
+                            filemode='a',
+                            format='%(asctime)s - %(message)s',
+                            level=logging.INFO,
+                            datefmt='%d-%b-%y %H:%M:%S')
+
+        # -------------------------------------starting main process-----------------------------------
         logging.info('starting the process...')
 
         if os.path.exists(TEMP_DIR_PATH):
