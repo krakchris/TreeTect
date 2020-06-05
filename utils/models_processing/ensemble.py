@@ -70,6 +70,9 @@ def get_inference_data(args):
             if not tif_file_name.endswith(('.tif')):
                 continue
 
+            if not tif_file_name.endswith(('.tif', )):
+                continue
+
             tif_file_path = os.path.join(args['input_dir'], tif_file_name)
             img_np = convert_to_jpg(
                                 tif_file_path,
@@ -181,14 +184,26 @@ def draw_boundary_boxes(optimized_tif_inference_data, args):
             optimized_tif_inference_data
             args : command line arguments dictionary
     '''
+
     dst_path = os.path.join(args['output_dir'], 'visualizations')
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
 
     for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='visualization', file=sys.stdout):
-        img_np = convert_to_jpg(
-            os.path.join(args['input_dir'], tif_file_name),
-            [4, 3, 2])
+
+        dataset = rasterio.open(os.path.join(args['input_dir'], tif_file_name))
+        img = dataset.read()
+
+        if img.shape[0] == 8:
+            img_np = convert_to_jpg(
+                os.path.join(args['input_dir'], tif_file_name),
+                [4, 3, 2])
+        elif img.shape[0] == 4:
+            img_np = convert_to_jpg(
+                os.path.join(args['input_dir'], tif_file_name),
+                [2, 1, 0])
+        else:
+            raise Exception('Error: Tif file is not of 4 or 8 bands')
 
         img = Image.fromarray(img_np)
         draw = ImageDraw.Draw(img)
@@ -208,7 +223,7 @@ def generate_shape_files(optimized_tif_inference_data, args):
     '''
     dst_path = os.path.join(args['output_dir'], 'inference_shape_files')
 
-    m2ftconversion = 1
+    M2FTCONVERSION = 1
 
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
@@ -252,38 +267,48 @@ def generate_shape_files(optimized_tif_inference_data, args):
 
                 crown_image = image_array[:, ymin:ymax, xmin:xmax]
 
-                RED = crown_image[4,:,:].astype(np.float32)
-                GREEN = crown_image[2,:,:].astype(np.float32)
-                BLUE = crown_image[1,:,:].astype(np.float32)
-                NIR = crown_image[7,:,:].astype(np.float32)
-                
-                ## vegetation indices    
+                if image_array.shape[0] == 8:
+                    RED = crown_image[4, :, :].astype(np.float32)
+                    GREEN = crown_image[2, :, :].astype(np.float32)
+                    BLUE = crown_image[1, :, :].astype(np.float32)
+                    NIR = crown_image[7, :, :].astype(np.float32)
+
+                elif image_array.shape[0] == 4:
+                    RED = crown_image[0, :, :].astype(np.float32)
+                    GREEN = crown_image[1, :, :].astype(np.float32)
+                    BLUE = crown_image[2, :, :].astype(np.float32)
+                    NIR = crown_image[3, :, :].astype(np.float32)
+
+                else:
+                    raise Exception('Error: Tif file is not of 4 or 8 bands')
+
+                ## vegetation indices
                 # NDVI
                 ndvi = np.where(
-                        (NIR+RED) == 0.,
-                        0,
-                        (NIR-RED)/(NIR+RED))
+                    (NIR+RED) == 0.,
+                    0,
+                    (NIR-RED)/(NIR+RED))
                 ndvi_avg = np.average(ndvi)
 
                 # EVI
                 G = 2.5; L = 2.4; C = 1
                 evi = np.where(
-                        (L+NIR+C*RED) == 0.,
-                        0,
-                        G*((NIR-RED)/(L+NIR+C*RED)))
+                    (L+NIR+C*RED) == 0.,
+                    0,
+                    G*((NIR-RED)/(L+NIR+C*RED)))
                 evi_avg = np.average(evi)
 
                 # SAVI
                 L = 0.5
                 savi = np.where(
-                        (RED + NIR + L) == 0.,
-                        0,
-                        ((NIR - RED) / (RED + NIR + L)) * (1+L))
+                    (RED + NIR + L) == 0.,
+                    0,
+                    ((NIR - RED) / (RED + NIR + L)) * (1+L))
                 savi_avg = np.average(savi)
 
                 # calculate spread of crown
-                north_south_spread = ((ymax - ymin) * y_res) * m2ftconversion
-                east_west_spread = ((xmax - xmin) * x_res) * m2ftconversion
+                north_south_spread = ((ymax - ymin) * y_res) * M2FTCONVERSION
+                east_west_spread = ((xmax - xmin) * x_res) * M2FTCONVERSION
 
                 # calculate area
                 area = north_south_spread * east_west_spread
@@ -365,7 +390,7 @@ if __name__ == "__main__":
 
     tif_inference_data = get_inference_data(args)
 
-    print('oprtmizing inference results...')
+    print('optimizing inference results...')
     optimized_tif_inference_data = optimize_bounding_boxes(tif_inference_data)
 
     print('generating visualizations...')
