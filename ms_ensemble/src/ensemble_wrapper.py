@@ -106,6 +106,7 @@ def get_meta_dict(meta_file_path):
 if __name__ == "__main__":
 
     try:
+        status = 'success'
         logging.info('starting the process...')
 
         if os.path.exists(TEMP_DIR_PATH):
