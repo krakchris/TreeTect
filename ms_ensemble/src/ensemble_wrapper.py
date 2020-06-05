@@ -17,6 +17,7 @@ import shortuuid
 S3_MODEL_DIR_BASE_PATH = os.environ['S3_MODEL_DIR_BASE_PATH']
 S3_DATA_UPLOAD_PATH = os.environ['S3_DATA_UPLOAD_PATH']
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
+S3_LABEL_MAP_PATH = os.environ['S3_LABEL_MAP_PATH']
 
 TEMP_DIR_PATH = '../temp_files'
 TIF_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'tif_dir')
@@ -128,6 +129,11 @@ if __name__ == "__main__":
         print('downloading tif files...')
         print('downloading tif files')
         s3_data_transfer('s3://' + meta_data_json['tif_dir_path'], TIF_DIR_PATH, True)
+
+        # -------------------------------download label_map path--------------------------------
+        print('downloading labelmap file...')
+        print('downloading labelmap file')
+        s3_data_transfer('s3://' + S3_LABEL_MAP_PATH, LABEL_FILE_PATH, False)
 
         # ------------------------------ download model file from s3 ------------------------------
 
