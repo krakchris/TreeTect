@@ -216,5 +216,5 @@ if __name__ == "__main__":
         logging.info('uploading log file to s3')
         s3_data_transfer(
             LOG_FILE_PATH,
-            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['model_version']}_{status}_ensembling_{shortuuid.uuid()}.log",
+            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{meta_data_json['tif_dir_path'].split('/')[-1].split('.')[0]}_{status}_ensembling_{shortuuid.uuid()}.log",
             False)
