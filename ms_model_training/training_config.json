@@ -1,9 +1,13 @@
 {
-    "model_version":"7.45",
+    "model_version":"7.46",
     "model_architecture": "faster_rcnn_resnet101_coco_model",
     "band":["1", "2", "ndvi"],
     "batch_size":1,
     "dataset":[{
+                "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified_400X400",
+                "training_steps" : 5
+                },
+                {
                 "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified_400X400",
                 "training_steps" : 5
                 }
