@@ -156,7 +156,7 @@ if __name__ == "__main__":
             # move the frozen graph to the model files with new name
             meta_data_dict = get_meta_dict(os.path.join(TEMP_DOWNLOAD_PATH, 'meta_data.txt'))
             dst_path = os.path.join(MODEL_DIR_PATH,
-                                    '_'.join(meta_data_dict['band'].split(', ')) + '_frozen_inference_graph.pb')
+                                    '_'.join(meta_data_dict['band'].split(', ')) + f'_{shortuuid.uuid()}.pb')
             shutil.move(os.path.join(TEMP_DOWNLOAD_PATH, 'frozen_inference_graph.pb'), dst_path)
 
         # ----------------------------running ensemble script --------------------------------------
