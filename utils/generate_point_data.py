@@ -15,7 +15,7 @@
 
 # importing
 import os
-import random
+import sys
 
 import argparse
 import fiona
@@ -89,10 +89,20 @@ def generate_point_shape_files(tif_file_path, annotations_df, output_dir):
                                       int(row['xmin']):int(row['xmax'])]
 
             # get bands
-            RED = crown_image[4, :, :].astype(np.float32)
-            GREEN = crown_image[2, :, :].astype(np.float32)
-            BLUE = crown_image[1, :, :].astype(np.float32)
-            NIR = crown_image[7, :, :].astype(np.float32)
+            if image_array.shape[0] == 8:
+                RED = crown_image[4, :, :].astype(np.float32)
+                GREEN = crown_image[2, :, :].astype(np.float32)
+                BLUE = crown_image[1, :, :].astype(np.float32)
+                NIR = crown_image[7, :, :].astype(np.float32)
+
+            elif image_array.shape[0] == 4:
+                RED = crown_image[0, :, :].astype(np.float32)
+                GREEN = crown_image[1, :, :].astype(np.float32)
+                BLUE = crown_image[2, :, :].astype(np.float32)
+                NIR = crown_image[3, :, :].astype(np.float32)
+
+            else:
+                raise Exception('Error: Tif file is not of 4 or 8 bands')
 
             ## vegetation indices
             # NDVI
@@ -155,7 +165,10 @@ if __name__ == '__main__':
     args = arguments()
     all_annotations_df = pd.read_csv(args['csv_file'])
 
-    for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='shape_files'):
+    for tif_file_name in tqdm(os.listdir(args['input_dir']), desc='shape_files', file=sys.stdout):
+
+        if not tif_file_name.endswith(('.tif',)):
+            continue
 
         tif_file_path = os.path.join(
             args['input_dir'],

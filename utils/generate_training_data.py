@@ -25,9 +25,7 @@ import rasterio
 from rasterio.mask import mask
 import slidingwindow as sw
 
-
 from shapely.geometry import shape, Polygon, box, MultiPolygon
-from shapely.ops import unary_union
 from tqdm import tqdm
 
 def arguments():
@@ -45,31 +43,19 @@ def arguments():
 
     return vars(parser.parse_args())
 
-def wgs2epsgzone(x, y):
-    EPSG = 32700-round((45+y)/90, 0)*100+round((183+x)/6, 0)
-    UTM_EPSG_code = EPSG
-
-    return int(UTM_EPSG_code)
-
-def check_valid_geometries(shapefile_path):
-
-    shape_list = []
-
-    for pol in fiona.open(shapefile_path):
-        if pol['geometry'] != None:
-            shape_list.append(pol)
-
-    return shape_list
-
 if __name__ == "__main__":
 
-    chunk_size_pix = 400
-    overlap_frac = 0.0
-    label = 'tree'
+    # constants
+    CHUNK_SIZE_PIX = 400
+    OVERLAP_FRAC = 0.0
+    LABEL = 'tree'
 
     args = arguments()
 
     for tif_file_name in tqdm(os.listdir(args['tif_dir']), desc='processing tif files : '):
+
+        if not tif_file_name.endswith(('.tif',)):
+            continue
 
         tif_file_path = os.path.join(args['tif_dir'], tif_file_name)
         shape_file_path = glob.glob(os.path.join(args['shape_dir'],
@@ -78,8 +64,6 @@ if __name__ == "__main__":
 
         dataset = rasterio.open(tif_file_path)
 
-        # load annotations
-        annotations_valid_shape_list = check_valid_geometries(shape_file_path)
         # convert list to shapely MultiPolgyons
         annotations_MultiPoly = MultiPolygon([shape(pol['geometry'])
                                               for pol in fiona.open(shape_file_path)
@@ -109,7 +93,7 @@ if __name__ == "__main__":
         # Generate the set of windows
         windows = sw.generate(np.rot90(np.fliplr(dataset.read().T)),
                               sw.DimOrder.HeightWidthChannel,
-                              chunk_size_pix, overlap_frac)
+                              CHUNK_SIZE_PIX, OVERLAP_FRAC)
 
         for i in tqdm(range(len(windows)), desc='chopping tif files : ', leave=False):
 
@@ -178,7 +162,7 @@ if __name__ == "__main__":
                                    str(y_min_bbox),
                                    str(x_max_bbox),
                                    str(y_max_bbox),
-                                   label]
+                                   LABEL]
 
                 string_tif = ",".join(string_list_tif)
 
