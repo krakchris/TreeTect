@@ -11,6 +11,9 @@ import geopandas as gpd
 from shapely.geometry import Point
 from tqdm import tqdm
 
+from multiprocessing import Pool, Value
+from p_tqdm import p_map
+
 def arguments():
     '''
         command line arguments
@@ -28,6 +31,19 @@ def arguments():
                         type=float)
 
     return vars(parser.parse_args())
+
+def find_minimum_distance(point):
+
+    x1, y1 = point
+    global total_nearest_points
+    global total_distance
+
+    dis = min([Point(x1, y1).distance(Point(x2, y2)) for x2, y2 in preicted_data_list])
+    if dis < args['threshold']:
+        with total_nearest_points.get_lock():
+            total_nearest_points.value += 1
+        with total_distance.get_lock():
+            total_distance.value += dis
     
 if __name__ == "__main__":
     args = arguments()
@@ -44,17 +60,10 @@ if __name__ == "__main__":
 
     # calculate minimum distance
     total_actual_points = len(actual_data_list)
-    total_nearest_points = 0
-    total_distance = 0
-    
-    for x1, y1 in tqdm(actual_data_list,
-                    desc='Processing : ',
-                    leave=False,
-                    file=sys.stdout):
-        dis = min([Point(x1, y1).distance(Point(x2, y2)) for x2, y2 in preicted_data_list])
-        if dis < args['threshold']:
-            total_nearest_points += 1
-            total_distance += dis
+    total_nearest_points = Value('i', 0)
+    total_distance = Value('f', 0)
 
-    print('Avg distance error:', total_distance/total_nearest_points)
-    print('Accuracy:', (total_actual_points/total_nearest_points)*100)
+    p_map(find_minimum_distance, actual_data_list[:20])
+    
+    print('Avg distance error:', total_distance.value/total_nearest_points.value)
+    print('Accuracy:', (total_nearest_points.value/total_actual_points)*100)
