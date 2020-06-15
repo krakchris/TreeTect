@@ -18,7 +18,7 @@ S3_TRAINING_DATA_UPLOAD_PATH = os.environ['S3_TRAINING_DATA_UPLOAD_PATH']
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
 CSV_TEST_PORTION = float(os.environ['CSV_TEST_PORTION'])
 
-TRAINING_DATA_GENERATION_SCRIPT_PATH = '../../utils/generate_point_data.py'
+TRAINING_DATA_GENERATION_SCRIPT_PATH = '../../utils/generate_training_data.py'
 CSV_GENERATE_SCRIPT_PATH = '../../utils/generate_train_test_split_from_csv.py'
 
 LOG_FILE_PATH = '../training.log'
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         
 
         # ----------------- download tif files from s3 to local folder-----------------------------
-        logging.info('Downloadingc tif file from s3')
+        logging.info('Downloading tif file from s3')
         print('Downloading tif file from s3...')
 
         s3_data_transfer(
@@ -115,7 +115,7 @@ if __name__ == "__main__":
         print('Running training data generation script...')
 
         run_subprocess(['python3',
-                        TRAINING_DATA_GENERATION_SCRIPT_PATH
+                        TRAINING_DATA_GENERATION_SCRIPT_PATH,
                         f'--tif_dir={TIF_DIR}',
                         f'--shape_dir={SHP_DIR}',
                         f'--output_dir={OUTPUT_DIR}'])
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 
         run_subprocess(['python3',
                         CSV_GENERATE_SCRIPT_PATH,
-                        f'--csv_file={os.path.join(OUTPUT_DIR, 'annotation.txt')}',
+                        f'--csv_file={os.path.join(OUTPUT_DIR, "annotations.txt")}',
                         f'--output_dir={OUTPUT_DIR}',
                         f'--test_portion={CSV_TEST_PORTION}'])
 
