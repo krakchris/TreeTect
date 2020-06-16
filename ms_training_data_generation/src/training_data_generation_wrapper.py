@@ -136,7 +136,7 @@ if __name__ == "__main__":
 
         s3_data_transfer(
             OUTPUT_DIR,
-            's3://' + S3_TRAINING_DATA_UPLOAD_PATH,
+            's3://' + S3_TRAINING_DATA_UPLOAD_PATH + S3_TIF_FILES_DIR_PATH.split('/')[-1],
             True)
 
     except Exception as e:
