@@ -230,7 +230,12 @@ if __name__ == "__main__":
                 model_files_dir,
                 f"base_model_{meta_data_json['model_architecture']}",
                 'model.ckpt')
-            pipeline.train_config.num_steps += dataset_info['training_steps']
+
+            if meta_data_json['is_transferlearn']:
+                pipeline.train_config.num_steps += dataset_info['training_steps']
+            else:
+                pipeline.train_config.num_steps = dataset_info['training_steps']
+
             pipeline.train_config.batch_size = meta_data_json['batch_size']
 
             pipeline.train_input_reader.label_map_path = LABEL_MAP_PATH
