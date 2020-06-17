@@ -160,7 +160,7 @@ if __name__ == "__main__":
         logging.info(f'Downloading {CONFIG_FILE_S3_PATH}')
         print(f'Downloading {CONFIG_FILE_S3_PATH}...')
 
-        s3_data_transfer(CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH)    
+        s3_data_transfer(CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH, False)    
 
         # --------------------------------loading json file-----------------------------------------
 
