@@ -8,7 +8,7 @@ import sys
 import subprocess
 import uuid
 
-CONFIG_DIR_S3_PATH = "gcw-treetect-tree-detection-dev/temp_data/config_files/training_config"
+CONFIG_DIR_S3_PATH = "treetech-workflow/Config/model_training"
 CONFIG_FILE_LOCAL_PATH = "training_config.json"
 
 if __name__ == "__main__":
