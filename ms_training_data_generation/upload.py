@@ -8,7 +8,7 @@ import sys
 import subprocess
 import uuid
 
-CONFIG_DIR_S3_PATH = "buckets/treetech-workflow/Config/training_data_generation"
+CONFIG_DIR_S3_PATH = "treetech-workflow/Config/training_data_generation"
 CONFIG_FILE_LOCAL_PATH = "training_data_generation_config.json"
 
 if __name__ == "__main__":
