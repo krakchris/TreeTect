@@ -286,6 +286,7 @@ if __name__ == "__main__":
 
 
         shutil.rmtree(chk_dir_path) #delete latest checkpoint as it is same as in training dir
+
         # --------------------------------running evaluation for latest checkpoints-----------------
 
         print('Running evaluation...')
