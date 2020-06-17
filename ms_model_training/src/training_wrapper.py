@@ -160,7 +160,7 @@ if __name__ == "__main__":
         logging.info(f'Downloading {CONFIG_FILE_S3_PATH}')
         print(f'Downloading {CONFIG_FILE_S3_PATH}...')
 
-        s3_data_transfer(CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH, False)    
+        s3_data_transfer('s3://' + CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH, False)    
 
         # --------------------------------loading json file-----------------------------------------
 
@@ -184,7 +184,18 @@ if __name__ == "__main__":
                                    meta_data_json['transfer_learn_from']),
             model_files_dir,
             True)
+            
+            checkpoint_txt_log_path = os.path.join(model_files_dir, 'training', 'checkpoint')
 
+            with open(checkpoint_txt_log_path, 'r') as f:
+                file_data = f.read()
+
+            file_data = file_data.replace(meta_data_json['transfer_learn_from'], model_files_dir.split('/')[-1])
+            
+            print(file_data)
+            with open(checkpoint_txt_log_path, 'w') as f:
+                f.write(file_data)
+                
             shutil.rmtree(os.path.join(model_files_dir, 'eval'))
             shutil.rmtree(os.path.join(model_files_dir, 'output_inference_graph'))
 
