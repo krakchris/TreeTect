@@ -26,6 +26,7 @@ MODEL_BASE_ARCHITECTURE_S3_PATH = os.environ['MODEL_BASE_ARCHITECTURE_S3_PATH']
 LABLE_FILE_S3_PATH = os.environ['LABLE_FILE_S3_PATH']
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
 S3_MODEL_UPLOAD_PATH = os.environ['S3_MODEL_UPLOAD_PATH']
+CONFIG_FILE_S3_PATH = os.environ['CONFIG_FILE_S3_PATH']
 
 DATASET_DIR_PATH = os.path.join(CURRENT_PATH, '..', 'dataset')
 TIF_DIR_PATH = os.path.join(DATASET_DIR_PATH, 'tif_files')
@@ -121,7 +122,7 @@ def generate_training_data(s3_dataset_path, band):
     print(f"-- Converting tif info jpg using band, {band}")
     logging.info(f"Converting tif info jpg using band, {band}")
     run_subprocess([
-                'python',
+                'python3',
                 CONVERT_TIF_INTO_JPG_CONVERSION_SCRIPT_PATH,
                 f'--input_dir={TIF_DIR_PATH}',
                 f'--output_dir={IMAGE_DIR_PATH}'],
@@ -131,7 +132,7 @@ def generate_training_data(s3_dataset_path, band):
 
     logging.info('Generating train tf records')
     print('-- Generating train tf records...')
-    run_subprocess(['python',
+    run_subprocess(['python3',
                     'generate_tfrecord.py',
                     f'--csv_file={TRAIN_CSV_PATH}',
                     f'--image_dir={os.path.join(IMAGE_DIR_PATH, "_".join(band))}',
@@ -139,7 +140,7 @@ def generate_training_data(s3_dataset_path, band):
 
     logging.info('Generating test tf records')
     print('-- Generating test tf records...')
-    run_subprocess(['python',
+    run_subprocess(['python3',
                     'generate_tfrecord.py',
                     f'--csv_file={TEST_CSV_PATH}',
                     f'--image_dir={os.path.join(IMAGE_DIR_PATH, "_".join(band))}',
@@ -155,6 +156,12 @@ if __name__ == "__main__":
 
     try:
         status = 'success'
+        # ----------------------------download training_config.json file from s3------------------
+        logging.info(f'Downloading {CONFIG_FILE_S3_PATH}')
+        print(f'Downloading {CONFIG_FILE_S3_PATH}...')
+
+        s3_data_transfer(CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH)    
+
         # --------------------------------loading json file-----------------------------------------
 
         logging.info('Reading config file.')
@@ -165,16 +172,28 @@ if __name__ == "__main__":
 
         logging.info('Downloading base model files...')
         print('Downloading base model files...')
+
         model_files_dir = os.path.join(
             CURRENT_PATH,
             '..',
             f"{meta_data_json['model_version']}_{meta_data_json['model_architecture']}")
 
-        s3_data_transfer(
-            's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
-                                   meta_data_json['model_architecture']),
+        if meta_data_json['is_transferlearn']:
+            s3_data_transfer(
+            's3://' + os.path.join(S3_MODEL_UPLOAD_PATH,
+                                   meta_data_json['transfer_learn_from']),
             model_files_dir,
             True)
+
+            shutil.rmtree(os.path.join(model_files_dir, 'eval'))
+            shutil.rmtree(os.path.join(model_files_dir, 'output_inference_graph'))
+
+        else:
+            s3_data_transfer(
+                's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
+                                    meta_data_json['model_architecture']),
+                model_files_dir,
+                True)
 
         # --------------------------- iteration over dataset and start training --------------------
         for iteration_no, dataset_info in enumerate(meta_data_json['dataset']):
@@ -199,7 +218,7 @@ if __name__ == "__main__":
                 model_files_dir,
                 f"base_model_{meta_data_json['model_architecture']}",
                 'model.ckpt')
-            pipeline.train_config.num_steps = dataset_info['training_steps']
+            pipeline.train_config.num_steps += dataset_info['training_steps']
             pipeline.train_config.batch_size = meta_data_json['batch_size']
 
             pipeline.train_input_reader.label_map_path = LABEL_MAP_PATH
@@ -230,7 +249,7 @@ if __name__ == "__main__":
             logging.info(f'iteration: {iteration_no}  :Start training')
 
             run_subprocess([
-                'python',
+                'python3',
                 'train.py',
                 '--logtostderr',
                 f'--train_dir={os.path.join(model_files_dir, "training")}',
@@ -250,7 +269,7 @@ if __name__ == "__main__":
         print('Running evaluation...')
         logging.info('Running evaluation')
         run_subprocess([
-            'python',
+            'python3',
             'modified_eval.py',
             '--logtostderr',
             f'--pipeline_config_path={model_config_path}',
@@ -273,7 +292,7 @@ if __name__ == "__main__":
                                                  'training',
                                                  f"model.ckpt-{max_checkpoint_number}")
 
-        run_subprocess(['python',
+        run_subprocess(['python3',
                         'export_inference_graph.py',
                         '--input_type=image_tensor',
                         f'--pipeline_config_path={pipeline_config_path}',
