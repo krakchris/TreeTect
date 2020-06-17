@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import subprocess
-from subprocess import PIPE
 import sys
 
 import pandas as pd
@@ -155,12 +154,12 @@ def generate_training_data(s3_dataset_path, band):
 if __name__ == "__main__":
 
     try:
-        status = 'success'
+        status = 'failure'
         # ----------------------------download training_config.json file from s3------------------
         logging.info(f'Downloading {CONFIG_FILE_S3_PATH}')
         print(f'Downloading {CONFIG_FILE_S3_PATH}...')
 
-        s3_data_transfer('s3://' + CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH, False)    
+        s3_data_transfer('s3://' + CONFIG_FILE_S3_PATH, TRAINING_CONFIG_JSON_PATH, False)
 
         # --------------------------------loading json file-----------------------------------------
 
@@ -180,13 +179,13 @@ if __name__ == "__main__":
 
         if meta_data_json['is_transferlearn']:
             s3_data_transfer(
-            's3://' + os.path.join(S3_MODEL_UPLOAD_PATH,
-                                   meta_data_json['transfer_learn_from']),
-            model_files_dir,
-            True)
-            
+                's3://' + os.path.join(S3_MODEL_UPLOAD_PATH,
+                                       meta_data_json['transfer_learn_from']),
+                model_files_dir,
+                True)
+
             checkpoint_txt_log_path = os.path.join(model_files_dir, 'training', 'checkpoint')
-            
+
             res = ''
             with open(checkpoint_txt_log_path, 'r') as file_obj:
                 for line in file_obj:
@@ -196,14 +195,14 @@ if __name__ == "__main__":
 
             with open(checkpoint_txt_log_path, 'w') as file_obj:
                 file_obj.write(res)
-                
+
             shutil.rmtree(os.path.join(model_files_dir, 'eval'))
             shutil.rmtree(os.path.join(model_files_dir, 'output_inference_graph'))
 
         else:
             s3_data_transfer(
                 's3://' + os.path.join(MODEL_BASE_ARCHITECTURE_S3_PATH,
-                                    meta_data_json['model_architecture']),
+                                       meta_data_json['model_architecture']),
                 model_files_dir,
                 True)
 
@@ -277,10 +276,16 @@ if __name__ == "__main__":
             print(f'iteration: {iteration_no}  :Copying checkpoint data...')
             logging.info(f'iteration: {iteration_no}  :Copying checkpoint data')
 
-            shutil.copytree(os.path.join(model_files_dir, 'training'),
-                            os.path.join(model_files_dir,
-                                         f"{iteration_no}_checkpoint_{meta_data_json['model_architecture']}"))
+            chk_dir_path = os.path.join(model_files_dir,
+                                         f"{iteration_no}_checkpoint_{meta_data_json['model_architecture']}")
 
+            if os.path.exists(chk_dir_path):
+                shutil.rmtree(chk_dir_path)
+
+            shutil.copytree(os.path.join(model_files_dir, 'training'), chk_dir_path)
+
+
+        shutil.rmtree(chk_dir_path) #delete latest checkpoint as it is same as in training dir
         # --------------------------------running evaluation for latest checkpoints-----------------
 
         print('Running evaluation...')
@@ -294,7 +299,7 @@ if __name__ == "__main__":
             f'--eval_dir={os.path.join(model_files_dir, "eval")}',
             f'--output_json_path={os.path.join(model_files_dir, "evaluation_results.json")}'])
 
-        # ----------------------------------freeze model----------------------------------------------
+        # ----------------------------------freeze model-------------------------------------------
 
         print('Freezing model graph...')
         logging.info('Freezing model graph')
@@ -353,8 +358,10 @@ if __name__ == "__main__":
                          's3://'+ S3_MODEL_UPLOAD_PATH + '/' + model_files_dir.split('/')[-1],
                          True)
 
+        status = 'success'
+
     except Exception as e:
-        status = 'failure'
+
         print(str(e))
         logging.error(f"\n\n{'#'*100}'\n\n'{str(e)}\n\n{'#'*100}\n\n")
 
