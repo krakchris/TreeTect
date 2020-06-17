@@ -186,15 +186,16 @@ if __name__ == "__main__":
             True)
             
             checkpoint_txt_log_path = os.path.join(model_files_dir, 'training', 'checkpoint')
-
-            with open(checkpoint_txt_log_path, 'r') as f:
-                file_data = f.read()
-
-            file_data = file_data.replace(meta_data_json['transfer_learn_from'], model_files_dir.split('/')[-1])
             
-            print(file_data)
-            with open(checkpoint_txt_log_path, 'w') as f:
-                f.write(file_data)
+            res = ''
+            with open(checkpoint_txt_log_path, 'r') as file_obj:
+                for line in file_obj:
+                    key, value = (line.strip().split(': '))
+                    value = os.path.join(model_files_dir, 'training', value.split('/')[-1][:-1])
+                    res += key + ': ' + '"' + value + '"\n'
+
+            with open(checkpoint_txt_log_path, 'w') as file_obj:
+                file_obj.write(res)
                 
             shutil.rmtree(os.path.join(model_files_dir, 'eval'))
             shutil.rmtree(os.path.join(model_files_dir, 'output_inference_graph'))
