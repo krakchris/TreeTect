@@ -4,13 +4,13 @@
 
 # importing
 import logging
+import json
 import os
 import subprocess
-from subprocess import PIPE
 import sys
+import shutil
 
 import shortuuid
-import shutil
 
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
 S3_CONFIG_FILE_PATH = os.environ['S3_CONFIG_FILE_PATH']
@@ -97,7 +97,7 @@ if __name__ == "__main__":
             's3://' + S3_CONFIG_FILE_PATH,
             CONFIG_LOCAL_PATH,
             False)
-        
+
         # -----------------------read config file ----------------------------------------
         with open(CONFIG_LOCAL_PATH, "r") as meta_file:
             meta_data_json = json.load(meta_file)
@@ -120,7 +120,7 @@ if __name__ == "__main__":
             SHP_DIR,
             True)
 
-        # ---------------- run training data generation process--------------------------------------
+        # ---------------- run training data generation process------------------------------------
         logging.info('Running training data generation script')
         print('Running training data generation script...')
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
                         CSV_GENERATE_SCRIPT_PATH,
                         f'--csv_file={os.path.join(OUTPUT_DIR, "annotations.txt")}',
                         f'--output_dir={OUTPUT_DIR}',
-                        f'--test_portion={meta_data_json['csv_test_portion']}'])
+                        f'--test_portion={meta_data_json["csv_test_portion"]}'])
 
         #  ---------------------------upload all data on s3--------------------------------------
         logging.info('Uploading files to s3')
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
         s3_data_transfer(
             OUTPUT_DIR,
-            's3://' + meta_data_json['s3_training_data_upload_dir_path'] + meta_data_json['s3_tif_files_dir_path'].split('/')[-1],
+            's3://' + meta_data_json['s3_training_data_upload_dir_path'] + '/' + meta_data_json['s3_tif_files_dir_path'].split('/')[-1],
             True)
 
         status = 'success'
