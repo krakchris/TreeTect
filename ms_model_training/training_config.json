@@ -6,8 +6,8 @@
     "band":["1", "2", "ndvi"],
     "batch_size":1,
     "dataset":[{
-                "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified_400X400",
-                "training_steps" : 5
+                "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Nubian_Square_31_5_2018_104001003DA55300Checked",
+                "training_steps" : 10000
                 }
             ]
 }
