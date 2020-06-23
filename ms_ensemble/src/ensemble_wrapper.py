@@ -125,7 +125,7 @@ if __name__ == "__main__":
         # ----------------------------downloading json file from s3-------------------------------
 
         print('downloading config file from s3....')
-        logging.log('downloading config file from s3')
+        logging.info('downloading config file from s3')
         s3_data_transfer('s3://' + CONFIG_FILE_S3_PATH, META_DATA_JSON_PATH, False)
 
         # --------------------------------loading json file-----------------------------------------
