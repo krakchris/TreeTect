@@ -1,11 +1,15 @@
-{
-    "model_version":"9.1",
+{  
+    "MODEL_BASE_ARCHITECTURE_S3_PATH": "gcw-treetect-tree-detection-dev/model_training_base_file",
+    "LABLE_FILE_S3_PATH": "gcw-treetect-tree-detection-dev/model_training_base_file/label_map.pbtxt",
+    "S3_LOG_FILE_UPLOAD_PATH": "treetech-workflow/Logs/Model-Training",
+    "S3_MODEL_UPLOAD_PATH": "gcw-treetect-tree-detection-dev/Models/worldview/development/",
+    "model_version": "test",
     "model_architecture": "faster_rcnn_inception_resnet_v2_atrous_coco",
     "is_transferlearn": true,
     "transfer_learn_from": "7.34_faster_rcnn_inception_resnet_v2_atrous_coco",
-    "band":["1", "2", "ndvi"],
-    "batch_size":1,
-    "dataset":[{
+    "band": ["1", "2", "ndvi"],
+    "batch_size": 1,
+    "dataset": [{
                 "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Nubian_Square_31_5_2018_104001003DA55300Checked",
                 "training_steps" : 10000
                 }

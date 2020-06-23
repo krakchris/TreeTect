@@ -21,11 +21,13 @@ from object_detection.protos import pipeline_pb2
 #CONSTANTS
 CURRENT_PATH = os.getcwd()
 
-MODEL_BASE_ARCHITECTURE_S3_PATH = os.environ['MODEL_BASE_ARCHITECTURE_S3_PATH']
-LABLE_FILE_S3_PATH = os.environ['LABLE_FILE_S3_PATH']
-S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
-S3_MODEL_UPLOAD_PATH = os.environ['S3_MODEL_UPLOAD_PATH']
-CONFIG_FILE_S3_PATH = os.environ['CONFIG_FILE_S3_PATH']
+# MODEL_BASE_ARCHITECTURE_S3_PATH = os.environ['MODEL_BASE_ARCHITECTURE_S3_PATH']
+# LABLE_FILE_S3_PATH = os.environ['LABLE_FILE_S3_PATH']
+# S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
+# S3_MODEL_UPLOAD_PATH = os.environ['S3_MODEL_UPLOAD_PATH']
+# CONFIG_FILE_S3_PATH = os.environ['CONFIG_FILE_S3_PATH']
+
+CONFIG_FILE_S3_PATH = 'treetech-workflow/Config/model_training/' + os.environ['TRAINING_JOB_NAME'] + '.json'
 
 DATASET_DIR_PATH = os.path.join(CURRENT_PATH, '..', 'dataset')
 TIF_DIR_PATH = os.path.join(DATASET_DIR_PATH, 'tif_files')
@@ -166,6 +168,12 @@ if __name__ == "__main__":
         logging.info('Reading config file.')
         with open(TRAINING_CONFIG_JSON_PATH, "r") as config_file:
             meta_data_json = json.load(config_file)
+
+            # setting up constant variables
+            MODEL_BASE_ARCHITECTURE_S3_PATH = meta_data_json['MODEL_BASE_ARCHITECTURE_S3_PATH']
+            LABLE_FILE_S3_PATH = meta_data_json['LABLE_FILE_S3_PATH']
+            S3_LOG_FILE_UPLOAD_PATH = meta_data_json['S3_LOG_FILE_UPLOAD_PATH']
+            S3_MODEL_UPLOAD_PATH = meta_data_json['S3_MODEL_UPLOAD_PATH']
 
         # ----------------------download base model path and rename according to version------------
 
