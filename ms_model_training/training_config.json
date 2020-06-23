@@ -11,7 +11,7 @@
     "batch_size": 1,
     "dataset": [{
                 "dataset_path" : "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Nubian_Square_31_5_2018_104001003DA55300Checked",
-                "training_steps" : 10000
+                "training_steps" : 6
                 }
             ]
 }
