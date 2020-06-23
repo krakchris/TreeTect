@@ -18,6 +18,7 @@ S3_MODEL_DIR_BASE_PATH = os.environ['S3_MODEL_DIR_BASE_PATH']
 S3_DATA_UPLOAD_PATH = os.environ['S3_DATA_UPLOAD_PATH']
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
 S3_LABEL_MAP_PATH = os.environ['S3_LABEL_MAP_PATH']
+CONFIG_FILE_S3_PATH = os.environ['CONFIG_FILE_S3_PATH']
 
 TEMP_DIR_PATH = '../temp_files'
 TIF_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'tif_dir')
@@ -30,7 +31,7 @@ COMBINED_POINT_SHAPE_FILE_DIR = os.path.join(ENSEMBLE_OUTPUT_DIR_PATH, 'combined
 
 LABEL_FILE_PATH = os.path.join(TEMP_DIR_PATH, 'labelmap.pbtxt')
 LOG_FILE_PATH = os.path.join('..', 'ensemble.log')
-META_DATA_JSON_PATH = '../ensemble_meta_data.json'
+META_DATA_JSON_PATH = '../ensemble_config.json'
 ENSEMBLE_SCRIPT_PATH = 'ensemble.py'
 GENERATE_POINT_DATA_SCRIPT_PATH = '../../utils/generate_point_data.py'
 COMBINE_SHAPE_FILE_SCRIPT_PATH = '../../utils/combine_shape_files.py'
@@ -106,7 +107,7 @@ def get_meta_dict(meta_file_path):
 if __name__ == "__main__":
 
     try:
-        status = 'success'
+        status = 'failure'
         logging.info('starting the process...')
 
         if os.path.exists(TEMP_DIR_PATH):
@@ -121,17 +122,25 @@ if __name__ == "__main__":
         os.makedirs(COMBINED_BOX_SHAPE_FILE_DIR)
         os.makedirs(COMBINED_POINT_SHAPE_FILE_DIR)
 
-        # --------------------------------loading jaon file-----------------------------------------
+        # ----------------------------downloading json file from s3-------------------------------
+
+        print('downloading config file from s3....')
+        logging.log('downloading config file from s3')
+        s3_data_transfer('s3://' + CONFIG_FILE_S3_PATH, META_DATA_JSON_PATH, False)
+
+        # --------------------------------loading json file-----------------------------------------
 
         with open(META_DATA_JSON_PATH, "r") as meta_file:
             meta_data_json = json.load(meta_file)
 
         # -------------------------------download tif from s3 --------------------------------------
+
         print('downloading tif files...')
         print('downloading tif files')
         s3_data_transfer('s3://' + meta_data_json['tif_dir_path'], TIF_DIR_PATH, True)
 
         # -------------------------------download label_map path--------------------------------
+
         print('downloading labelmap file...')
         print('downloading labelmap file')
         s3_data_transfer('s3://' + S3_LABEL_MAP_PATH, LABEL_FILE_PATH, False)
@@ -212,9 +221,9 @@ if __name__ == "__main__":
                          True)
 
         shutil.rmtree(TEMP_DIR_PATH)
+        status = 'success'
 
     except Exception as e:
-        status = 'failure'
         print(str(e))
         logging.error(f"\n\n{'#'*100}'\n\n'{str(e)}\n\n{'#'*100}\n\n")
 
