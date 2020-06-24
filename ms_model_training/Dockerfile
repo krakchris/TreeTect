@@ -4,9 +4,10 @@ WORKDIR /
 RUN apt-get update
 RUN pip3 --version
 ADD ./tensorflow /
-ADD featute_msservice/TreeTect/ms_model_training /
-ADD featute_msservice/TreeTect/ / 
-RUN pip3 install -r requirements.txt
+ADD featute_msservice/TreeTect/ms_model_training ms_model_training/
+ADD featute_msservice/TreeTect/utils utils/ 
+RUN ls
+RUN pip3 install -r ms_model_training/requirement.txt
 RUN pip3 install awscli
 RUN apt install git -y
 WORKDIR TensorFlow/models/research/
