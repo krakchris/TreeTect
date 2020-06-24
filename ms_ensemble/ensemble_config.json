@@ -1,5 +1,11 @@
-{ 
-    "model_versions": ["worldview/development/7.6_rfcn_resnet101_coco_model"],
+{
+    "S3_MODEL_DIR_BASE_PATH": "gcw-treetect-tree-detection-dev/Models",
+    "S3_DATA_UPLOAD_PATH": "gcw-treetect-tree-detection-dev/ensemble_results",
+    "S3_LOG_FILE_UPLOAD_PATH": "treetech-workflow/Logs/Ensemble",
+    "S3_LABEL_MAP_PATH": "gcw-treetect-tree-detection-dev/model_training_base_file/label_map.pbtxt",
+    "model_versions": [
+                    "worldview/development/7.6_rfcn_resnet101_coco_model"
+                    ],
     "tif_dir_path": "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified_400X400",
     "threshold" : 0.5
 }

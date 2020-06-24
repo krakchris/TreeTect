@@ -13,7 +13,7 @@ CONFIG_FILE_LOCAL_PATH = "ensemble_config.json"
 
 if __name__ == "__main__":
 
-    dst_file_name = str(uuid.uuid4()) + '_' + CONFIG_FILE_LOCAL_PATH.split('/')[-1]
+    dst_file_name = str(uuid.uuid4()) + '-' + 'ensembling-config.json'
     dst_path = 's3://' + CONFIG_DIR_S3_PATH + '/' + dst_file_name
 
     subprocess.run(

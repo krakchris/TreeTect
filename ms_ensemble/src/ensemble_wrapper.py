@@ -14,11 +14,13 @@ import shutil
 import shortuuid
 
 #CONSTANTS
-S3_MODEL_DIR_BASE_PATH = os.environ['S3_MODEL_DIR_BASE_PATH']
-S3_DATA_UPLOAD_PATH = os.environ['S3_DATA_UPLOAD_PATH']
-S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
-S3_LABEL_MAP_PATH = os.environ['S3_LABEL_MAP_PATH']
-CONFIG_FILE_S3_PATH = os.environ['CONFIG_FILE_S3_PATH']
+# S3_MODEL_DIR_BASE_PATH = os.environ['S3_MODEL_DIR_BASE_PATH']
+# S3_DATA_UPLOAD_PATH = os.environ['S3_DATA_UPLOAD_PATH']
+# S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
+# S3_LABEL_MAP_PATH = os.environ['S3_LABEL_MAP_PATH']
+# CONFIG_FILE_S3_PATH = os.environ['CONFIG_FILE_S3_PATH']
+
+CONFIG_FILE_S3_PATH = 'treetech-workflow/Config/ensembling/' + os.environ['TRAINING_JOB_NAME'] + '.json'
 
 TEMP_DIR_PATH = '../temp_files'
 TIF_DIR_PATH = os.path.join(TEMP_DIR_PATH, 'tif_dir')
@@ -132,6 +134,12 @@ if __name__ == "__main__":
 
         with open(META_DATA_JSON_PATH, "r") as meta_file:
             meta_data_json = json.load(meta_file)
+
+        # load constant variable from config file for using sagemaker service
+        S3_MODEL_DIR_BASE_PATH = meta_data_json['S3_MODEL_DIR_BASE_PATH']
+        S3_DATA_UPLOAD_PATH = meta_data_json['S3_DATA_UPLOAD_PATH']
+        S3_LOG_FILE_UPLOAD_PATH = meta_data_json['S3_LOG_FILE_UPLOAD_PATH']
+        S3_LABEL_MAP_PATH = meta_data_json['S3_LABEL_MAP_PATH']
 
         # -------------------------------download tif from s3 --------------------------------------
 
