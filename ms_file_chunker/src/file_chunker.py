@@ -1,18 +1,13 @@
 """
-    script to chunk tif files
-    input is the tif files directory
-    -> Input:
-            - Path to the tif directory
-            - Path to output directory
-    -> command to run:
-        python ensemble.py\
-            --tif_file=<PATH TO THE TIF FILES DIRECTORY>\
-            --output_dir=<PATH TO THE OUTPUT DIRECTORY>
-    -> Output:
-        - chunked tif files
+    Script to chunk big tif files into smaller ones
+    Command to run:
+        python file_chunker.py
+         --tif_file=<PATH TO THE BIG TIF FILE>\
+         --output_dir=<PATH TO THE OUTPUT DIRECTORY>
 """
 
 import os
+import sys
 
 import argparse
 import numpy as np
@@ -43,7 +38,9 @@ if __name__ == "__main__":
 
     args = arguments()
 
-for big_tif_file_name in tqdm(os.listdir(args['tif_dir']), desc='Processing_tif_files :'):
+for big_tif_file_name in tqdm(os.listdir(args['tif_dir']),
+                              desc='Processing_tif_files :',
+                              file=sys.stdout):
 
     big_tif_file_path = os.path.join(args['tif_dir'], big_tif_file_name)
     dataset = rasterio.open(big_tif_file_path)
@@ -67,7 +64,10 @@ for big_tif_file_name in tqdm(os.listdir(args['tif_dir']), desc='Processing_tif_
                           sw.DimOrder.HeightWidthChannel,
                           CHUNK_SIZE_PIX, OVERLAP_FRAC)
 
-    for i in tqdm(range(len(windows)), desc='Chopping tif file : ', leave=False):
+    for i in tqdm(range(len(windows)),
+                  desc='Chopping tif file : ',
+                  leave=False,
+                  file=sys.stdout):
 
         # convert chunk coordinates to bbox
         x_min = (windows[i].x * x_pix_size_m) + x_min_data

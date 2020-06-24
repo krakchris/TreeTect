@@ -16,7 +16,7 @@ import numpy as np
 import rasterio
 
 from skimage import exposure
-from skimage.io import imsave, imread
+from skimage.io import imsave
 from tqdm import tqdm
 
 
@@ -38,13 +38,21 @@ def convert_to_jpg(tif_file_path, band_list):
 
     if 'ndvi' in band_list:
 
-        red = img[[4], :, :]
-        nir = img[[6], :, :]
+        if img.shape[0] == 8:
+            RED = img[[4], :, :]
+            NIR = img[[6], :, :]
+
+        elif img.shape[0] == 4:
+            RED = img[[0], :, :]
+            NIR = img[[3], :, :]
+
+        else:
+            raise Exception('Error: Tif file is not of 4 or 8 bands')
 
         ndvi = np.where(
-            (nir+red) == 0.,
+            (NIR+RED) == 0.,
             0,
-            (nir-red)/(nir+red))
+            (NIR-RED)/(NIR+RED))
 
         ndvi_index_no = band_list.index('ndvi')
 
@@ -62,6 +70,9 @@ def convert_to_jpg(tif_file_path, band_list):
 
     # correct exposure for each band individually
     img_plot_enhance = np.array(img_plot, copy=True)
+
+    if img.shape[0] == 4:
+        img_plot = img_plot.astype('float32')
 
     for band in range(3):
         # check max amount of a single value

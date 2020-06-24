@@ -13,6 +13,7 @@
 
 import glob
 import os
+import sys
 
 import argparse
 import geopandas as gpd
@@ -41,11 +42,12 @@ if __name__ == "__main__":
     # listing all shape files recursively in the folder
     shape_file_path_list = glob.glob(args['input_dir'] + '/**/*.shp', recursive=True)
 
-    dst_file_name = '_'.join(shape_file_path_list[0].strip().split('/')[-1].split('_')[:-2])
+    dst_file_name = '_'.join(shape_file_path_list[0].strip().split('/')[-1].split('_')[:-1])
 
     gdf = gpd.GeoDataFrame(pd.concat([gpd.read_file(shape_file_path)
                                       for shape_file_path in tqdm(shape_file_path_list,
-                                                                  desc='processing _shape files')],
+                                                                  desc='processing _shape files',
+                                                                  file=sys.stdout)],
                                      ignore_index=True),
                            crs=gpd.read_file(shape_file_path_list[0]).crs)
 
