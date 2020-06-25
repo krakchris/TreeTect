@@ -151,7 +151,6 @@ if __name__ == "__main__":
         status = 'success'
 
     except Exception as e:
-        status = 'failure'
         print('Failure:', str(e))
 
         logging.error(f"\n\n{'#'*100}\n\n{str(e)}\n\n{'#'*100}\n\n")
