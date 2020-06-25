@@ -16,7 +16,7 @@ S3_BIG_TIF_FILE_PATH = os.environ['S3_BIG_TIF_FILE_PATH']
 S3_CHUNKED_TIF_DIR_PATH = os.environ['S3_CHUNKED_TIF_DIR_PATH']
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
 
-LOG_FILE_PATH = '../training.log'
+LOG_FILE_PATH = '../file_chunker.log'
 INPUT_DIR = '../inp_data'
 OUTPUT_DIR = '../op_dir'
 
