@@ -21,12 +21,12 @@ import shutil
 import argparse
 import fiona
 import geopandas as gpd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
+from scipy.spatial.distance import cdist
 from shapely.geometry import LineString, box, mapping
 from tqdm import tqdm
-from scipy.spatial.distance import cdist
 
 # constants
 CRS = 'EPSG:32631'
@@ -153,7 +153,7 @@ if __name__ == "__main__":
             elif x < 0 and y < 0:
                 quad_3 += 1
             elif x > 0 and y < 0:
-                quad_4 += 1 
+                quad_4 += 1
 
             predicted_data_np_array = np.delete(predicted_data_np_array, min_dis_index, axis=0)
 
@@ -191,9 +191,9 @@ if __name__ == "__main__":
                 'properties': {}})
 
     print('Generation plot image...')
-    plt.figure(figsize=(20,20))
+    plt.figure(figsize=(20, 20))
     plt.plot([[0]*len(x_coor_list), x_coor_list],
-            [[0]*len(y_coor_list), y_coor_list]) 
+             [[0]*len(y_coor_list), y_coor_list])
     plt.savefig(os.path.join(args['output_dir'], 'res.png'))
 
     shutil.rmtree(TEMP_DIR_PATH)
