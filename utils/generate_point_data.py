@@ -5,7 +5,7 @@
             - Path to annotation csv file
             - Path to output directory
     -> command to run:
-        python ensemble.py\
+        python generate_point_data.py\
             --input_dir=<PATH_TO_THE_DIRECTORY_CONTAINING_TIF_FILES>\
             --csv_file=<PATH TO THE ANNOTATION'S CSV FILE>\
             --output_dir=<PATH TO THE OUTPUT DIRECTORY>\
