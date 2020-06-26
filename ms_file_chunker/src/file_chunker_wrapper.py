@@ -16,7 +16,7 @@ S3_BIG_TIF_FILE_PATH = os.environ['S3_BIG_TIF_FILE_PATH']
 S3_CHUNKED_TIF_DIR_PATH = os.environ['S3_CHUNKED_TIF_DIR_PATH']
 S3_LOG_FILE_UPLOAD_PATH = os.environ['S3_LOG_FILE_UPLOAD_PATH']
 
-LOG_FILE_PATH = '../training.log'
+LOG_FILE_PATH = '../file_chunker.log'
 INPUT_DIR = '../inp_data'
 OUTPUT_DIR = '../op_dir'
 
@@ -70,7 +70,7 @@ def s3_data_transfer(src, dest, is_dir):
 
 if __name__ == "__main__":
     try:
-        status = 'success'
+        status = 'failure'
 
         if os.path.exists(INPUT_DIR):
             shutil.rmtree(INPUT_DIR)
@@ -109,8 +109,8 @@ if __name__ == "__main__":
             's3://' + S3_CHUNKED_TIF_DIR_PATH,
             True)
 
+        status = 'success'
     except Exception as e:
-        status = 'failure'
         print('Failure:', str(e))
 
         logging.error(f"\n\n{'#'*100}\n\n{str(e)}\n\n{'#'*100}\n\n")

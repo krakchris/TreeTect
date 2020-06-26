@@ -1,7 +1,7 @@
 """
     Script to chunk big tif files into smaller ones
     Command to run:
-        python file_chunker.py
+        python file_chunker.py\
          --tif_file=<PATH TO THE BIG TIF FILE>\
          --output_dir=<PATH TO THE OUTPUT DIRECTORY>
 """
