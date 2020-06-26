@@ -21,6 +21,7 @@ profile_default/
 ipython_config.py
 
 # Environments
+.venv
 env/
 venv/
 ENV/
