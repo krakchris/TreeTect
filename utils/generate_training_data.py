@@ -7,7 +7,7 @@
             - Path to the shape file directory which contains shape files for each tif
             - Path to output directory
     -> command to run:
-        python ensemble.py\
+        python generate_training_data.py\
             --tif_dir=<PATH_TO_THE_DIRECTORY_CONTAINING_TIF_FILES>\
             --shape_dir=<PATH TO THE SHAPE FILE DIR>\
             --output_dir=<PATH TO THE OUTPUT DIRECTORY>
