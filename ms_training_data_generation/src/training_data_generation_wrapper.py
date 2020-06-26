@@ -163,5 +163,5 @@ if __name__ == "__main__":
 
         s3_data_transfer(
             LOG_FILE_PATH,
-            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{status}_'training_data_generation'_{shortuuid.uuid()}.log",
+            f"s3://{S3_LOG_FILE_UPLOAD_PATH}/{status}_training_data_generation_{shortuuid.uuid()}.log",
             False)
