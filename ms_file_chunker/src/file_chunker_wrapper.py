@@ -95,7 +95,7 @@ if __name__ == "__main__":
         print('Run chunking of file...')
 
         run_subprocess([
-            'python',
+            'python3',
             'file_chunker.py',
             f'--tif_dir={INPUT_DIR}',
             f'--output_dir={OUTPUT_DIR}'])
