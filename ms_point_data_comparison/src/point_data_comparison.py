@@ -7,8 +7,8 @@
         python point_data_comparison.py\
             --actual_shp_file=<PATH_TO_THE_ACTUAL_SHAPE_FILE>\
             --predicted_shp_file=<PATH TO THE PREDICTED SHAPE FILE>\
-            --threshold=<RADIUS_OF_AREA_IN WHICH_TREES_WILL_BE_SEARCHED>
-            --output_dir=<PATH TO THE OUTPUT DIRECTORY>\
+            --threshold=<RADIUS_OF_AREA_IN WHICH_TREES_WILL_BE_SEARCHED>\
+            --output_dir=<PATH TO THE OUTPUT DIRECTORY>
     -> Output:
         - Line shape files from actual to predicted point for the nearest tree
 """

@@ -171,7 +171,7 @@ def optimize_bounding_boxes(tif_inference_data):
             avg_ymin = int(avg_ymin/len(temp_list))
             avg_xmax = int(avg_xmax/len(temp_list))
             avg_ymax = int(avg_ymax/len(temp_list))
-            avg_score = int(avg_score)/len(temp_list)
+            avg_score = (avg_score)/len(temp_list)
 
             optimized_tif_inference_data[tif_file_name].append([
                 [avg_xmin, avg_ymin, avg_xmax, avg_ymax],
@@ -238,7 +238,8 @@ def generate_shape_files(optimized_tif_inference_data, args):
 
         dataset = rasterio.open(tif_file_path)
 
-        crs = dataset.read_crs()
+        # crs = dataset.read_crs()
+        crs = 'EPSG:32631'
         image_array = dataset.read()
 
         # get raster size in meters

@@ -9,9 +9,9 @@ import boto3
 
 REGION = 'us-east-1'
 FARGATE_CLUSTER = 'techtree'
-FARGATE_TASK_DEF_NAME = 'MsTrainnig:1'
+FARGATE_TASK_DEF_NAME = 'Training-Data-Generation:3'
 FARGATE_SUBNET_ID = 'subnet-69b85848'
-CONTAINER_NAME = 'modeltrainning'
+CONTAINER_NAME = 'Training-Data-Generation'
 
 S3_LOG_FILE_UPLOAD_PATH = 'treetech-workflow/Logs/Ms-Trainning-Data-Generation'
 
