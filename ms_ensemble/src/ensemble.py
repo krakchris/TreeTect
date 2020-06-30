@@ -229,6 +229,7 @@ def generate_shape_files(optimized_tif_inference_data, args):
     dst_path = os.path.join(args['output_dir'], 'inference_shape_files')
 
     M2FTCONVERSION = 1
+    crs = 'EPSG:32631'
 
     if not os.path.exists(dst_path):
         os.makedirs(dst_path)
@@ -236,10 +237,9 @@ def generate_shape_files(optimized_tif_inference_data, args):
     for tif_file_name in tqdm(optimized_tif_inference_data.keys(), desc='shape_files', file=sys.stdout):
         tif_file_path = os.path.join(args['input_dir'], tif_file_name)
 
-        dataset = rasterio.open(tif_file_path)
+        dataset = rasterio.open(tif_file_path, crs=crs)
 
         # crs = dataset.read_crs()
-        crs = 'EPSG:32631'
         image_array = dataset.read()
 
         # get raster size in meters
