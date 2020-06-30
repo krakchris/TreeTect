@@ -8,7 +8,7 @@
         python generate_point_data.py\
             --input_dir=<PATH_TO_THE_DIRECTORY_CONTAINING_TIF_FILES>\
             --csv_file=<PATH TO THE ANNOTATION'S CSV FILE>\
-            --output_dir=<PATH TO THE OUTPUT DIRECTORY>\
+            --output_dir=<PATH TO THE OUTPUT DIRECTORY>
     -> Output:
         - point data shape files for each tif
 """
