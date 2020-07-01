@@ -347,9 +347,8 @@ if __name__ == "__main__":
 
         # --------------------------------remove unnecessary files ---------------------------------
 
-        print('Removing training and base folder...')
-        logging.info('Removing training and base folder')
-        shutil.rmtree(os.path.join(model_files_dir, 'training'))
+        print('Removing base folder...')
+        logging.info('Removing base folder')
         shutil.rmtree(os.path.join(model_files_dir,
                                    f"base_model_{meta_data_json['model_architecture']}"))
 
