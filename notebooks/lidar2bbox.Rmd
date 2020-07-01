@@ -1,0 +1,258 @@
+---
+Treetect Run workflow notebook
+Jim Groot, Thedmer Postma, & Chris van Diemen
+Green City Watch 2020
+---
+
+Script for filtering and segmenting LiDAR tiles. 
+
+INPUT: 
+- a folder with las files
+- a folder with one tif file that covers the same extend as the las files
+
+OUTPUT:
+- tree hulls shapefile
+
+```{r}
+### Load libraries
+
+library(raster)
+library(colorRamps)
+library(sp)
+library(sf)
+library(rgl)
+library(rgdal)
+library(rgeos)
+library(maptools)
+library(lidR)
+
+library(rlas)
+
+```
+
+
+```{r}
+## Setup directory structure ###########################
+
+# set area of interest names
+
+index = 1
+
+# set file specifics
+data_type <- 'NAIP2018'
+annotation_type <- 'LiDAR'
+area <- 'Nubian_square'
+notes <- 'NA' 
+
+# set number of tiles to run
+run_all = FALSE
+run_nr = 10 # if run_all = FALSE, how many to run?
+
+# choose if you want to write canopy height model to file
+write_chm = FALSE
+
+# segmentation method
+method <- "Silva"
+
+# specify AOI nr and NDVI number to match AOI
+tile_nr = index
+tif_nr = 1
+
+# build site names
+site_name <- paste(data_type,annotation_type,area,notes, sep = "_")
+
+# site_name <- 'Amsterdam_test'
+
+# Get directory of this script to set working directory
+working_dir <- paste0(gsub("\\", "/", fileSnapshot()$path, fixed=TRUE),"/")
+setwd(working_dir)  # Set to working directory
+
+# check if foldres exist, otherwise create
+dir.create(paste0("../../data/", site_name), showWarnings = FALSE) # directory to store the data
+dir.create(paste0("../../data/", site_name, "/las"), showWarnings = FALSE)  # store raw .las/.laz files in this directory
+dir.create(paste0("../../data/", site_name, "/tif"), showWarnings = FALSE)  # store ndvi rasters in this directory
+dir.create(paste0("../../data/", site_name, "/extracted_trees"), showWarnings = FALSE)  # store ndvi rasters in this directory
+```
+
+
+
+
+```{r}
+site_name = 'Amsterdam_test'
+
+### DATA
+### POINT CLOUD
+files_laz <- list.files(paste0("../../../data/", site_name, "/las/C_25BZ2/"), pattern = ".las")
+path_laz = paste0("../../../data/", site_name, "/las/C_25BZ2/", files_laz[10])
+
+### TIF RASTER
+files_tif <- list.files(path = paste0("../../data/", site_name, "/tif"), pattern = ".tif")
+path_tif <- paste0("../../data/", site_name, "/tif/", files_tif[tif_nr])
+
+### LOAD DATA
+brick_tif <- brick(path_tif)
+laz <- readLAS(path_laz)
+
+proj4string(laz) <- ("+proj=lcc +lat_1=42.68333333333333 +lat_2=41.71666666666667 +lat_0=41 +lon_0=-71.5 +x_0=200000.0001016002 +y_0=750000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs")
+
+print(files_tif)
+print(files_laz)
+
+```
+
+
+```{r}
+### Step 1: Preprocessing ###########################
+
+if(run_all){
+  run_seq <- seq(length(files_laz))
+}else{
+  
+  run_seq <- seq(run_nr)
+}
+
+# Loop over chunks 
+for (index in run_seq){
+
+
+path_laz = paste0("../../data/", site_name, "/las/", files_laz[index])
+laz <- readLAS(path_laz)
+
+proj4string(laz) <- ("+proj=lcc +lat_1=42.68333333333333 +lat_2=41.71666666666667 +lat_0=41 +lon_0=-71.5 +x_0=200000.0001016002 +y_0=750000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs")
+
+start_time <- Sys.time()
+
+### SELECT BBOXES PER BBOX
+# fix bbox_shapes projection if needed
+# if (proj4string(laz) != proj4string(brick_tif)){
+#   laz <- spTransform(laz, proj4string(brick_tif))
+#   
+# }
+
+# Crop and mask
+r2 <- crop(brick_tif, laz@bbox)
+#brick_tif_clip <- mask(r2, chm@extent)
+
+# calculate NDVI
+
+brick_tif_nir <- r2[[4]]
+brick_tif_red <- r2[[1]]
+
+brick_tif_ndvi <- (brick_tif_nir - brick_tif_red) / (brick_tif_nir + brick_tif_red)
+
+
+# add ndvi to pointcloud
+las_ndvi <- lasmergespatial(laz, brick_tif_ndvi, attribute='NDVI')
+las_ndvi <- lasaddextrabytes(las_ndvi, name="NDVI", desc="Worldview NDVI")
+
+las_ndvi <- laz
+
+#Calculate Digital Terrain model and Canopy Height Model
+DTM <- grid_terrain(las_ndvi, res=1, algorithm=knnidw(k=2, p=2))
+
+#normalize laz file
+aoi_norm <- lasnormalize(las_ndvi,algorithm=DTM, na.rm = TRUE)
+
+#filter based on elevation
+laz_fil <- lasfilter(aoi_norm, Z > 1, Z < 4*sd(aoi_norm@data$Z), Z > -4*sd(aoi_norm@data$Z))
+
+# perform the tree segmentation and remove the unclassified pixels afterwards
+
+if(method == "watershed"){
+## Watershed method
+  print("Using watershed")
+  chm <- grid_canopy(laz_fil, res = 3, p2r(1, na.fill = knnidw()))
+  segmented_trees <- lastrees(laz_fil, algorithm = watershed(chm, th_tree = 3, tol = 1, ext = 1))
+}else if(method == "Dalponte"){
+# ###### Dalponte Method ######
+  print("Using Dalponte 2016")
+  treetops <- tree_detection(chm, lmf(ws =8, hmin= 3, shape=c("square")))
+  segmented_trees <-lastrees(laz_fil, algorithm =dalponte2016(chm,ttops, th_tree = 3, th_seed = 0.45, th_cr = 0.55, max_cr = 15, ID = "treeID"))
+}else if(method == "Li"){
+# ###### Li Method ######
+  print("Using Li 2012")
+  segmented_trees <- lastrees(laz_fil, algorithm=li2012(R=15, hmin=3)) 
+}else if(method == "Silva"){
+# ###### Silva method ######
+  print("Using Silva 2016")
+  chm <- grid_canopy(laz_fil, res = 0.1, p2r(1, na.fill = NULL))
+  treetops <- tree_detection(laz_fil, algorithm = lmf(ws = 20))
+  segmented_trees <- lastrees(laz_fil, algorithm = silva2016(chm, treetops, max_cr_factor = 0.7, exclusion = 0.3)) 
+}else{
+print("wrong method, try Li, Dalponte, Silva, or watershed")
+}
+  
+  
+#filter clouds without TreeID
+segmented_trees = lasfilter(segmented_trees, !is.na(treeID))
+
+
+
+
+hulls = tree_hulls(
+  segmented_trees,
+  type = c("bbox"),
+  func = .stdmetrics,
+  attribute = "treeID"
+)
+
+hulls <- hulls[hulls$n > 50,]
+
+## SET NAME
+lidar_tile_name <- scan(what = "", text = files_laz[index], sep = ".")[1]
+
+#### WRITE HULLS TO FILE
+
+path_trees_delineated <- paste0("../../../data/", site_name, "/extracted_trees/tmp/",lidar_tile_name,"_hulls.shp")
+writeOGR(obj=hulls, dsn=path_trees_delineated, layer = "torn", driver="ESRI Shapefile")
+print(paste0('Hulls Shapefile created@', path_trees_delineated))
+
+if (write_chm){
+### WRITE CANOPY HEIGHT MODEL TO FILE
+path_chm <- paste0("../../../data/", site_name, "/tif/",site_name,"_", lidar_tile_name,"_chm.tif")
+writeRaster(chm, path_chm, format = 'GTiff', overwrite = TRUE)
+print(paste('CHM raster created @', path_chm))
+}
+
+end_time <- Sys.time()
+print(end_time - start_time)
+}
+
+
+
+plot(segmented_trees , color = "treeID", colorPalette = random.colors(100))
+
+plot(hulls)
+```
+
+
+```{r}
+## merge shapefiles
+
+files_hulls <- list.files(paste0("../../data/", site_name, "/extracted_trees"), pattern = ".shp")
+path_hulls = paste0("../../data/", site_name, "/extracted_trees/", files_hulls[1])
+
+p1 <- readOGR(dsn = path_hulls)
+
+for (file_hull in files_hulls){
+  path_hull = paste0("../../data/", site_name, "/extracted_trees/", file_hull)
+  p2 <- readOGR(dsn = path_hull)
+  p1 <- bind(p1, p2)
+}
+
+## reproject
+utm_proj4str <- "+proj=utm +zone=19 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+p1 <- spTransform(p1, utm_proj4str)
+
+path_tree_hulls_merged <- paste0("../../data/", site_name, "/extracted_trees/",site_name,"_hulls_merged.shp")
+writeOGR(obj=p1, dsn=path_tree_hulls_merged, layer = "torn", driver="ESRI Shapefile")
+```
+
+```{r}
+
+writeRaster(chm, paste0("../../data/", site_name, "/tif/", site_name,"_" ,lidar_tile_name,'_chm.tif') , format = 'GTiff') 
+
+
+
+```
+

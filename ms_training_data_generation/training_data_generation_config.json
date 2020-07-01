@@ -1,0 +1,6 @@
+{
+    "s3_tif_files_dir_path": "gcw-treetect-common-input-data-dev/input_data/chunked_data/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified_1157X1158",
+    "s3_shape_files_dir_path": "gcw-treetect-tree-detection-dev/Annotations/worldview/Amsterdam_2018-07-26_10_57_10400100407D9200_nr_modified/",
+    "s3_training_data_upload_dir_path": "gcw-treetect-tree-detection-dev/test_data",
+    "csv_test_portion" : 0.2
+}

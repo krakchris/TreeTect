@@ -1,0 +1,5 @@
+{
+    "actual_points_dir_path":"gcw-treetect-tree-detection-dev/test_data_point_comparision/selected_points_Ams",
+    "predicted_points_dir_path":"gcw-treetect-tree-detection-dev/test_data_point_comparision/predicted_point_data",
+    "threshold": 3
+}
