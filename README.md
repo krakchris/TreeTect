@@ -6,11 +6,12 @@ Green City Watch is a geospatial AI firm specializing in urban ecological engine
 After learning that urban trees live just 13 years, while their rural counterparts live up to 100 or more, Green City Watch was born. We leverage a combination of ecological engineering, machine learning techniques, and remote sensing methods, known as "geospatial AI", to boost urban tree longevity. 
 
 Green City Watch empowers 30+ (mega)cities, from Boston to Amsterdam to Jakarta, to understand, monitor, and improve their urban forests through data-driven decision-making.
-
+***
 
 # TreeTect Opensource
 
 TreeTect is and open source Tree Detection algorithm using Object detection.
+TreeTect was designed to run on AWS Services using Lambda and Sagemaker, but also works fine locally.
 
 ![image](https://user-images.githubusercontent.com/32303294/92995149-1851ae00-f501-11ea-92c0-67fa6ac25f50.png)
 
@@ -34,6 +35,9 @@ TreeTect is and open source Tree Detection algorithm using Object detection.
 * Create bounding boxes on image tiles
 * Create Training CSV from Bounding boxes
 * (Re)Train Chosen models
+
+## Wiki
+In the [Wiki](https://www.google.com) you can find descriptions on how to use each of the algorithms and what their respective input conditions are.
 
 ## Basemodels
 The base models are shared in THIS S3 Bucket.
