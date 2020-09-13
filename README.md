@@ -22,7 +22,18 @@ TreeTect is and open source Tree Detection algorithm using Object detection.
 * Tree Detection Shapefile boxes
 * Tree Detection Shapefile points
 
+## Algortithm Steps
+### Creating inferences from large satellite/aerial image
+* Tiling a large image into small 400x400 pixel tiles
+* Choosing models for ensembling and running ensemble models
 
+### (Re)Training a model on hand annotations from Image
+* Tiling a large image into small 400x400 pixel tiles
+* (OPTIONAL) Choosing models for ensembling and running ensemble models
+   * Improve and adjust bounding boxes in preferred GIS programme
+* Create bounding boxes on image tiles
+* Create Training CSV from Bounding boxes
+* (Re)Train Chosen models
 
 ## Basemodels
 The base models are shared in THIS S3 Bucket.
