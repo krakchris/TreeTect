@@ -1,11 +1,12 @@
 
 # Introduction
 
-Green City Watch is a geospatial AI firm specializing in urban ecological engineering. We build greener, smarter cities by leveraging Industry 4.0 technology to empower municipalities and local councils with data-driven urban ecology.   
+Green City Watch is an open source initiative specialized in urban ecological engineering. We leverage remote sensing and machine learning, known as “geoAI” to boost urban tree longevity.
 
-After learning that urban trees live just 13 years, while their rural counterparts live up to 100 or more, Green City Watch was born. We leverage a combination of ecological engineering, machine learning techniques, and remote sensing methods, known as "geospatial AI", to boost urban tree longevity. 
+The time is ripe for a smarter way to map, monitor, and manage one of the most important urban infrastructural assets: trees. While “smart cities” continue to innovate and invest in applications for “smart” waste management, mobility, and  lighting, trees have long been left behind.
 
-Green City Watch empowers 30+ (mega)cities, from Boston to Amsterdam to Jakarta, to understand, monitor, and improve their urban forests through data-driven decision-making.
+Green City Watch has worked with 30+ (mega)cities, from Boston to Amsterdam to Jakarta, to provide open-source software to understand, oversee, and improve urban forests.
+
 ***
 
 # TreeTect Opensource
