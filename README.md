@@ -38,7 +38,7 @@ TreeTect was designed to run on AWS Services using Lambda and Sagemaker, but als
 * (Re)Train Chosen models
 
 ## Wiki
-In the [Wiki](https://www.google.com) you can find descriptions on how to use each of the algorithms and what their respective input conditions are.
+In the [Wiki](https://https://github.com/krakchris/TreeTect/wiki) you can find descriptions on how to use each of the algorithms and what their respective input conditions are.
 
 ## Basemodels
 The base models are shared in THIS S3 Bucket.
