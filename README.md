@@ -24,7 +24,7 @@ TreeTect was designed to run on AWS Services using Lambda and Sagemaker, but als
 * Tree Detection Shapefile boxes
 * Tree Detection Shapefile points
 
-## Algortithm Steps
+## Algorithm Steps
 ### Creating inferences from large satellite/aerial image
 * Tiling a large image into small 400x400 pixel tiles
 * Choosing models for ensembling and running ensemble models
@@ -38,7 +38,7 @@ TreeTect was designed to run on AWS Services using Lambda and Sagemaker, but als
 * (Re)Train Chosen models
 
 ## Wiki
-In the [Wiki](https://https://github.com/krakchris/TreeTect/wiki) you can find descriptions on how to use each of the algorithms and what their respective input conditions are.
+In the [Wiki](https://github.com/krakchris/TreeTect/wiki) you can find descriptions on how to use each of the algorithms and what their respective input conditions are.
 
 ## Basemodels
 The base models are shared in THIS S3 Bucket.
