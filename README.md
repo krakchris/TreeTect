@@ -41,7 +41,6 @@ TreeTect was designed to run on AWS Services using Lambda and Sagemaker, but als
 In the [Wiki](https://github.com/krakchris/TreeTect/wiki) you can find descriptions on how to use each of the algorithms and what their respective input conditions are.
 
 ## Basemodels
-The base models are shared in THIS S3 Bucket.
 We have tested the following algorithms to be working:
 
 * faster_rcnn_inception_resnet_v2_atrous_coco(batch size -1)
@@ -55,6 +54,8 @@ We have tested the following algorithms to be working:
 * ssd_mobilenet_v2_coco(batch size -16)
 * ssd_mobilenet_v1_fpn_coco_model(batch size- 16)
 * faster_rcnn_resnet101_kitti(batch size - 1)
+
+The base models will be shared soon.
 
 ## OpenData
 Treetect was was tested on Worldview-2/3, Pleiades and SkySat and Aerial imagery.
