@@ -11,10 +11,13 @@ Green City Watch has worked with 30+ (mega)cities, from Boston to Amsterdam to J
 
 # TreeTect Opensource
 
+<a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+
 TreeTect is and open source Tree Detection algorithm using Object detection.
 TreeTect was designed to run on AWS Services using Lambda and Sagemaker, but also works fine locally.
 
 ![image](https://user-images.githubusercontent.com/32303294/92995149-1851ae00-f501-11ea-92c0-67fa6ac25f50.png)
+
 
 ## Input
 * 4 or 8 band aerial or satellite imagery with a spatial resolution between 20-80cm including RGBI bands
