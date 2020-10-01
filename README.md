@@ -61,6 +61,6 @@ We have tested the following algorithms to be working:
 The base models will be shared soon.
 
 ## OpenData
-Treetect was was tested on Worldview-2/3, Pleiades and SkySat and Aerial imagery.
+Treetect is tested on Worldview-2/3, Pleiades and SkySat and Aerial imagery.
 If you do not have access to Commercial High Resolution Imagery you can find a NAIP Dataset [here](https://azure.microsoft.com/en-us/services/open-datasets/catalog/naip/)
 
