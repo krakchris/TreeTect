@@ -58,7 +58,7 @@ We have tested the following algorithms to be working:
 * ssd_mobilenet_v1_fpn_coco_model(batch size- 16)
 * faster_rcnn_resnet101_kitti(batch size - 1)
 
-All base models can be downloaded [here](https://gcw-treetect-tree-detection-public.s3.us-east-2.amazonaws.com/index.html#Models/worldview/development/)
+All base models can be downloaded [here](https://gcw-treetect-tree-detection-public.s3.us-east-2.amazonaws.com/index.html#Models/worldview/development/) the version numbers of the models correspond with test results that can be found [here](https://docs.google.com/spreadsheets/d/1CAtNzGuJZoV0UGW9JCfyKVykT1zLlwnTJwGUx2GHAgY/edit?usp=sharing).
 
 ## OpenData
 Treetect is tested on Worldview-2/3, Pleiades and SkySat and Aerial imagery.
