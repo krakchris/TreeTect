@@ -60,7 +60,7 @@ We have tested the following algorithms to be working:
 
 All base models can be downloaded [here](https://gcw-treetect-tree-detection-public.s3.us-east-2.amazonaws.com/index.html#Models/worldview/development/) the version numbers of the models correspond with test results that can be found [here](https://docs.google.com/spreadsheets/d/1CAtNzGuJZoV0UGW9JCfyKVykT1zLlwnTJwGUx2GHAgY/edit?usp=sharing).
 
-Use AWS CLI to download multiple files at once. See [documentation](https://docs.aws.amazon.com/cli/latest/reference/s3/cp.html).
+Use AWS CLI to download multiple files at once. See [documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/s3/cp.html).
 
 ## OpenData
 Treetect is tested on Worldview-2/3, Pleiades and SkySat and Aerial imagery.
