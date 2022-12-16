@@ -67,9 +67,6 @@ See the overview below. Models corresponding to model 7.1-7.44 in the [Model res
 
 ~~Use AWS CLI to download multiple files at once. See [documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/s3/cp.html).~~
 
-~~For example to download the 7.1 model use: 
-aws s3 cp s3://gcw-treetect-tree-detection-public/Models/worldview/development/7.1_rfcn_resnet101_coco_model/ . --recursive
-
 The base models are not available on AWS anymore. For inquiries contact https://github.com/krakchris
 
 ## OpenData
