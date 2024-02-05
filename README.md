@@ -63,11 +63,11 @@ For each of the basemodels we have tested several band combinations
 See the overview below. Models corresponding to model 7.1-7.44 in the [Model results](https://docs.google.com/spreadsheets/d/1CAtNzGuJZoV0UGW9JCfyKVykT1zLlwnTJwGUx2GHAgY/edit?usp=sharing).
 ![Overview](https://user-images.githubusercontent.com/32303294/101372094-cb853580-38ab-11eb-9068-faa4faadac30.jpg)
 
-~~All base models can be downloaded [here](https://gcw-treetect-tree-detection-public.s3.us-east-2.amazonaws.com/index.html#Models/worldview/development/)~~ the version numbers of the models correspond with test results that can be found [here](https://docs.google.com/spreadsheets/d/1CAtNzGuJZoV0UGW9JCfyKVykT1zLlwnTJwGUx2GHAgY/edit?usp=sharing).
+~~All base models can be downloaded [here](https://gcw-treetect-tree-detection-public.s3.us-east-2.amazonaws.com/index.html#Models/worldview/development/) the version numbers of the models correspond with test results that can be found [here](https://docs.google.com/spreadsheets/d/1CAtNzGuJZoV0UGW9JCfyKVykT1zLlwnTJwGUx2GHAgY/edit?usp=sharing).~~
 
 ~~Use AWS CLI to download multiple files at once. See [documentation](https://awscli.amazonaws.com/v2/documentation/api/latest/reference/s3/cp.html).~~
 
-The base models are not available on AWS anymore. For inquiries contact https://github.com/krakchris
+The base models are not available on AWS anymore. For inquiries contact https://github.com/krakchris or https://www.linkedin.com/in/jim-groot/
 
 ## OpenData
 Treetect is tested on Worldview-2/3, Pleiades and SkySat and Aerial imagery.
