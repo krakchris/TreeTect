@@ -5,7 +5,7 @@ cligj==0.5.0
 cycler==0.10.0
 Fiona==1.8.13.post1
 geopandas==0.7.0
-joblib==0.15.1
+joblib==1.2.0
 kiwisolver==1.2.0
 matplotlib==3.2.2
 munch==2.5.0
