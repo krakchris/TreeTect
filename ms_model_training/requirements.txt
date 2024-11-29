@@ -9,7 +9,7 @@ imageio==2.8.0
 kiwisolver==1.2.0
 matplotlib==3.2.1
 networkx==2.4
-numpy==1.17
+numpy==1.22.0
 pandas==1.0.4
 Pillow==7.1.2
 pyparsing==2.4.7
